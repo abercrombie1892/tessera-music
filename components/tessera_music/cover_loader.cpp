@@ -53,9 +53,14 @@ static ppa_client_handle_t scaler() {
 
 static uint32_t align_up(uint32_t value, uint32_t to) { return (value + to - 1) / to * to; }
 
+// One download at a time, into one buffer the JPEG hardware reads from: the loader that has it, and the buffer.
+static CoverLoader *owner = nullptr;
+static uint8_t *body = nullptr;
+static size_t body_len = 0, body_cap = 0;
+
 // The proxy serves only these sizes; the next one up from the side we draw.
 static int proxy_size(int side) {
-  for (int size : {256, 512, 1024})
+  for (int size : {80, 160, 256, 512, 1024})
     if (side <= size) return size;
   return 1024;
 }
@@ -68,17 +73,31 @@ static std::string sized_url(const std::string &url, int side) {
   return url.substr(0, query + 5) + size + (end == std::string::npos ? "" : url.substr(end));
 }
 
-void CoverLoader::request(const std::string &url, int side) {
+void CoverLoader::request(const std::string &url, int side, bool keep) {
   if (url.empty()) {
     clear();
     return;
   }
   const std::string sized = sized_url(url, side);
   if (sized == wanted_url_ && side == side_) return;
+  if (!keep && shown_ >= 0) {
+    shown_ = -1;
+    revision_++;
+  }
   wanted_url_ = sized;
   side_ = side;
   retry_after_ms_ = 0;
   close_();
+}
+
+CoverLoader::~CoverLoader() { release(); }
+
+void CoverLoader::release() {
+  clear();
+  for (Slot &slot : slots_) {
+    heap_caps_free(slot.pixels);
+    slot = Slot{};
+  }
 }
 
 void CoverLoader::clear() {
@@ -95,8 +114,11 @@ void CoverLoader::close_() {
   if (fd_ >= 0) ::close(fd_);
   fd_ = -1;
   step_ = Step::IDLE;
-  body_len_ = 0;
   sent_ = 0;
+  if (owner == this) {
+    owner = nullptr;
+    body_len = 0;
+  }
 }
 
 void CoverLoader::fail_(const char *why) {
@@ -109,7 +131,8 @@ bool CoverLoader::start_() {
   // http://host[:port]/path, the only kind Music Assistant hands out on the home network.
   const std::string &url = wanted_url_;
   if (url.rfind("http://", 0) != 0) {
-    fail_("not http");
+    // Only the home network's proxy speaks plain http: a cover elsewhere never loads, so it is not asked again.
+    loaded_url_ = url;
     return false;
   }
   const size_t slash = url.find('/', 7);
@@ -141,7 +164,8 @@ bool CoverLoader::start_() {
   }
   head_ = "GET " + path_ + " HTTP/1.0\r\nHost: " + authority + "\r\nConnection: close\r\n\r\n";
   sent_ = 0;
-  body_len_ = 0;
+  owner = this;
+  body_len = 0;
   started_ms_ = millis();
   step_ = Step::CONNECTING;
   return true;
@@ -151,6 +175,7 @@ void CoverLoader::poll() {
   if (step_ == Step::IDLE) {
     if (wanted_url_.empty() || wanted_url_ == loaded_url_) return;
     if (retry_after_ms_ && (int32_t) (millis() - retry_after_ms_) < 0) return;
+    if (owner != nullptr) return;
     start_();
     return;
   }
@@ -181,11 +206,11 @@ void CoverLoader::poll() {
     }
     sent_ += n;
     if (sent_ < head_.size()) return;
-    if (body_ == nullptr) {
+    if (body == nullptr) {
       jpeg_decode_memory_alloc_cfg_t config{};
       config.buffer_direction = JPEG_DEC_ALLOC_INPUT_BUFFER;
-      body_ = static_cast<uint8_t *>(jpeg_alloc_decoder_mem(MAX_BODY, &config, &body_cap_));
-      if (body_ == nullptr) {
+      body = static_cast<uint8_t *>(jpeg_alloc_decoder_mem(MAX_BODY, &config, &body_cap));
+      if (body == nullptr) {
         fail_("no memory");
         return;
       }
@@ -194,13 +219,13 @@ void CoverLoader::poll() {
   }
   size_t read_now = 0;
   while (read_now < READ_PER_PASS) {
-    if (body_len_ >= body_cap_) {
+    if (body_len >= body_cap) {
       fail_("too large");
       return;
     }
-    const ssize_t n = ::recv(fd_, body_ + body_len_, std::min(body_cap_ - body_len_, READ_PER_PASS), 0);
+    const ssize_t n = ::recv(fd_, body + body_len, std::min(body_cap - body_len, READ_PER_PASS), 0);
     if (n > 0) {
-      body_len_ += n;
+      body_len += n;
       read_now += n;
       continue;
     }
@@ -214,39 +239,38 @@ void CoverLoader::poll() {
   if (read_now >= READ_PER_PASS) return;
   ::close(fd_);
   fd_ = -1;
-  step_ = Step::IDLE;
   if (decode_()) {
     loaded_url_ = wanted_url_;
     retry_after_ms_ = 0;
   } else {
     retry_after_ms_ = millis() + RETRY_MS;
   }
-  body_len_ = 0;
+  close_();
 }
 
 bool CoverLoader::decode_() {
   const char *ok = "HTTP/1.0 200";
   const char *ok11 = "HTTP/1.1 200";
-  if (body_len_ < 16 || (memcmp(body_, ok, 12) != 0 && memcmp(body_, ok11, 12) != 0)) {
+  if (body_len < 16 || (memcmp(body, ok, 12) != 0 && memcmp(body, ok11, 12) != 0)) {
     ESP_LOGW(TAG, "Cover refused by the server: %s", wanted_url_.c_str());
     return false;
   }
   const uint8_t *end = nullptr;
-  for (size_t i = 0; i + 3 < body_len_; i++) {
-    if (body_[i] == '\r' && body_[i + 1] == '\n' && body_[i + 2] == '\r' && body_[i + 3] == '\n') {
-      end = body_ + i + 4;
+  for (size_t i = 0; i + 3 < body_len; i++) {
+    if (body[i] == '\r' && body[i + 1] == '\n' && body[i + 2] == '\r' && body[i + 3] == '\n') {
+      end = body + i + 4;
       break;
     }
   }
   if (end == nullptr) return false;
-  const size_t jpeg_len = body_len_ - (end - body_);
+  const size_t jpeg_len = body_len - (end - body);
   // The decoder reads from the start of its own buffer: move the picture over the header.
-  memmove(body_, end, jpeg_len);
+  memmove(body, end, jpeg_len);
 
   jpeg_decoder_handle_t engine = decoder();
   ppa_client_handle_t ppa = scaler();
   jpeg_decode_picture_info_t info{};
-  if (engine == nullptr || ppa == nullptr || jpeg_decoder_get_info(body_, jpeg_len, &info) != ESP_OK ||
+  if (engine == nullptr || ppa == nullptr || jpeg_decoder_get_info(body, jpeg_len, &info) != ESP_OK ||
       info.width == 0 || info.height == 0 || info.sample_method == JPEG_DOWN_SAMPLING_GRAY) {
     ESP_LOGW(TAG, "Cover is no picture the hardware decodes (PNG, progressive or grey)");
     return false;
@@ -271,7 +295,7 @@ bool CoverLoader::decode_() {
   config.conv_std = JPEG_YUV_RGB_CONV_STD_BT601;
   uint32_t written = 0;
   const uint32_t started = millis();
-  if (jpeg_decoder_process(engine, &config, body_, jpeg_len, decoded, decoded_cap, &written) != ESP_OK) {
+  if (jpeg_decoder_process(engine, &config, body, jpeg_len, decoded, decoded_cap, &written) != ESP_OK) {
     ESP_LOGW(TAG, "JPEG hardware refused the cover");
     return false;
   }

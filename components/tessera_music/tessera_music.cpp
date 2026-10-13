@@ -1,6 +1,9 @@
 #include "tessera_music.h"
 #include <algorithm>
+#include <new>
 #include <string>
+#include "esp_heap_caps.h"
+#include "player_card.h"
 
 namespace esphome::tessera_music {
 
@@ -27,6 +30,7 @@ class NowTile : public tessera::Tile {
   void create(const tessera::TileContext &c) override {
     width_ = c.width;
     height_ = c.height;
+    tile_ = c.tile;
     player_ = c.options["player"] | "";
     const std::string title = c.options["title"] | "large";
     show_title_ = title != "off";
@@ -88,7 +92,7 @@ class NowTile : public tessera::Tile {
       ui::set_text(artist_, "");
       return;
     }
-    ma->pin_player(player_);
+    plugin_->follow_room(player_);
     const auto &now = ma->now_playing();
     const auto *player = ma->player(ma->selected_player());
     const bool playing = player != nullptr && player->playback_state == "playing";
@@ -114,10 +118,7 @@ class NowTile : public tessera::Tile {
     ui::set_color(note_, theme::MUTED);
   }
 
-  void on_tap() override {
-    auto *ma = plugin_->ma();
-    if (ma != nullptr && ma->is_connected()) ma->cmd_play_pause();
-  }
+  void on_tap() override { tessera::open_card(plugin_->plugin_id(), "player", "", tile_); }
 
  protected:
   void paint_cover_() {
@@ -139,19 +140,47 @@ class NowTile : public tessera::Tile {
   std::string player_;
   bool show_title_{true}, side_by_side_{false};
   Font title_font_{Font::HEADLINE};
-  int width_{0}, height_{0}, side_{0}, text_w_{0};
+  int width_{0}, height_{0}, side_{0}, text_w_{0}, tile_{-1};
   uint32_t cover_revision_{0};
   lv_obj_t *art_{}, *note_{}, *image_{}, *title_{}, *artist_{}, *track_{}, *fill_{}, *elapsed_{}, *total_{};
 };
 
 void TesseraMusic::setup() {
+  // The small covers of the card's lists live in PSRAM, beside their pixels.
+  void *room = heap_caps_calloc(MAX_ROWS, sizeof(CoverLoader), MALLOC_CAP_SPIRAM);
+  if (room != nullptr) {
+    thumbs_ = static_cast<CoverLoader *>(room);
+    for (int i = 0; i < MAX_ROWS; ++i) new (&thumbs_[i]) CoverLoader();
+  }
   add_tile("now_playing", [this]() { return new NowTile(this); });
+  add_card("player", [this]() { return new PlayerCard(this); }, true);
+}
+
+CoverLoader &TesseraMusic::thumb(int row) {
+  static CoverLoader none;
+  return thumbs_ != nullptr && row >= 0 && row < MAX_ROWS ? thumbs_[row] : none;
+}
+
+void TesseraMusic::follow_room(const std::string &name) {
+  if (!card_open_ && ma_ != nullptr) ma_->pin_player(name);
+}
+
+void TesseraMusic::card_closed() {
+  card_open_ = false;
+  card_cover_.release();
+  if (thumbs_ != nullptr)
+    for (int i = 0; i < MAX_ROWS; ++i) thumbs_[i].release();
+  if (ma_ != nullptr) ma_->release_lists();
 }
 
 void TesseraMusic::loop() {
   const bool active = seen_ms_ != 0 && millis() - seen_ms_ < ACTIVE_MS;
   if (ma_ != nullptr) ma_->set_ui_active(active);
-  if (active) cover_.poll();
+  if (!active) return;
+  card_cover_.poll();
+  cover_.poll();
+  if (!card_open_ || thumbs_ == nullptr) return;
+  for (int i = 0; i < MAX_ROWS; ++i) thumbs_[i].poll();
 }
 
 }  // namespace esphome::tessera_music

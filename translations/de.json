@@ -4,7 +4,18 @@
   },
   "screen": {
     "connecting": "Verbinde mit Music Assistant",
-    "nothing": "Es läuft nichts"
+    "nothing": "Es läuft nichts",
+    "tab_now": "Jetzt",
+    "tab_rooms": "Räume",
+    "tab_queue": "Warteschlange",
+    "tab_library": "Bibliothek",
+    "shelf_playlists": "Playlists",
+    "shelf_radio": "Radio",
+    "shelf_favorites": "Favoriten",
+    "more": "Mehr laden",
+    "loading": "Lädt …",
+    "queue_empty": "Die Warteschlange ist leer",
+    "list_empty": "Hier ist nichts"
   },
   "app": {
     "name": "Music Assistant",
@@ -23,6 +34,7 @@
     "title_normal": "Normal",
     "title_off": "Ausgeblendet",
     "ma_token_2": "Music-Assistant-Token, der Rest",
-    "ma_token_2_hint": "Alles nach den ersten 200 Zeichen."
+    "ma_token_2_hint": "Alles nach den ersten 200 Zeichen.",
+    "card_name": "Player"
   }
 }
