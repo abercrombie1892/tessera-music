@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6
+- The tile's cover colours show no bands: its ground is a picture of the card's size, a soft diagonal blend
+  Floyd-Steinberg dithered into RGB565 as the dashboard's glow is, drawn once per track, instead of LVGL's gradient.
+
 ## 0.3.5
 - The screen never freezes while Music Assistant is away: the connect runs without waiting (select() on every loop pass,
   given up after 4 s), and an IP address needs no DNS. Before, each retry could hold the screen for up to 2 s.

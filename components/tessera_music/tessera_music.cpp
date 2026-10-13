@@ -3,6 +3,11 @@
 #include <string>
 #include "esphome/components/music_assistant/ma_artwork.h"
 #include "esphome/components/music_assistant/ma_skeleton.h"
+#include <vector>
+#include "esp_heap_caps.h"
+
+// private LVGL header (misc/cache/instance/lv_image_cache.h), not in lvgl.h
+extern "C" void lv_image_cache_drop(const void *src);
 
 namespace esphome::tessera_music {
 
@@ -33,6 +38,35 @@ static lv_color_t lit(uint32_t tone, float peak) {
   return lv_color_make((uint8_t) (r * scale), (uint8_t) (g * scale), (uint8_t) (b * scale));
 }
 
+// The ground of a tile in the cover's colours: a soft diagonal blend from `top` (top left) to `foot` (bottom right),
+// Floyd-Steinberg dithered into RGB565 as the dashboard's glow is, so it shows no bands.
+static void paint_ground(uint16_t *pixels, int w, int h, lv_color_t top, lv_color_t foot) {
+  std::vector<float> rows(6 * (w + 2), 0.0f);
+  float *cur = rows.data(), *next = cur + 3 * (w + 2);
+  const float tr = top.red, tg = top.green, tb = top.blue, fr = foot.red, fg = foot.green, fb = foot.blue;
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      const float t = std::min(1.0f, 0.8f * y / std::max(1, h - 1) + 0.2f * x / std::max(1, w - 1));
+      const float want[3] = {tr + (fr - tr) * t, tg + (fg - tg) * t, tb + (fb - tb) * t};
+      const int levels[3] = {31, 63, 31};
+      int q[3];
+      for (int c = 0; c < 3; c++) {
+        const int i = (x + 1) * 3 + c;
+        const float v = std::clamp(want[c] + cur[i], 0.0f, 255.0f);
+        q[c] = (int) (v * levels[c] / 255.0f + 0.5f);
+        const float e = v - q[c] * 255.0f / levels[c];
+        cur[i + 3] += e * 7 / 16;
+        next[i - 3] += e * 3 / 16;
+        next[i] += e * 5 / 16;
+        next[i + 3] += e / 16;
+      }
+      pixels[y * w + x] = (uint16_t) ((q[0] << 11) | (q[1] << 5) | q[2]);
+    }
+    std::swap(cur, next);
+    std::fill(next, next + 3 * (w + 2), 0.0f);
+  }
+}
+
 static void text_color(lv_obj_t *label, uint32_t color) {
   if (!lv_color_eq(lv_obj_get_style_text_color(label, LV_PART_MAIN), lv_color_hex(color)))
     lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
@@ -42,6 +76,12 @@ static void text_color(lv_obj_t *label, uint32_t color) {
 class NowTile : public tessera::Tile {
  public:
   explicit NowTile(TesseraMusic *plugin) : plugin_(plugin) {}
+  ~NowTile() override {
+    if (ground_px_ == nullptr) return;
+    if (card_ != nullptr && lv_obj_is_valid(card_)) lv_obj_set_style_bg_image_src(card_, nullptr, 0);
+    lv_image_cache_drop(&ground_);
+    heap_caps_free(ground_px_);
+  }
 
   void create(const tessera::TileContext &c) override {
     width_ = c.width;
@@ -162,12 +202,7 @@ class NowTile : public tessera::Tile {
     const uint32_t tone = plugin_->cover().tone();
     if (tone != 0) tone_ = tone;
     if (tone_ == 0) return;
-    const lv_color_t top = lit(tone_, 140), foot = lit(tone_, 70);
-    if (!lv_color_eq(lv_obj_get_style_bg_color(card_, LV_PART_MAIN), top)) lv_obj_set_style_bg_color(card_, top, 0);
-    if (!lv_color_eq(lv_obj_get_style_bg_grad_color(card_, LV_PART_MAIN), foot))
-      lv_obj_set_style_bg_grad_color(card_, foot, 0);
-    if (lv_obj_get_style_bg_grad_dir(card_, LV_PART_MAIN) != LV_GRAD_DIR_VER)
-      lv_obj_set_style_bg_grad_dir(card_, LV_GRAD_DIR_VER, 0);
+    paint_ground_();
     text_color(title_, 0xF4F1EC);
     text_color(artist_, 0xE6E1D9);
     text_color(elapsed_, 0xD9D4CC);
@@ -179,11 +214,47 @@ class NowTile : public tessera::Tile {
     }
   }
 
+  // The dithered ground as the card's background picture, drawn again for a new colour or size. Tessera colours its
+  // cards again when it draws them: every tick puts the picture back (only when it is not there).
+  void paint_ground_() {
+    const int w = lv_obj_get_width(card_), h = lv_obj_get_height(card_);
+    if (w <= 0 || h <= 0) return;
+    if (tone_ != ground_tone_ || w != ground_.header.w || h != ground_.header.h) {
+      const size_t bytes = (size_t) w * h * 2;
+      if (bytes > ground_cap_) {
+        lv_obj_set_style_bg_image_src(card_, nullptr, 0);
+        heap_caps_free(ground_px_);
+        ground_px_ = static_cast<uint8_t *>(heap_caps_malloc(bytes, MALLOC_CAP_SPIRAM));
+        ground_cap_ = ground_px_ == nullptr ? 0 : bytes;
+        if (ground_px_ == nullptr) return;
+      }
+      paint_ground(reinterpret_cast<uint16_t *>(ground_px_), w, h, lit(tone_, 140), lit(tone_, 60));
+      lv_image_cache_drop(&ground_);
+      ground_.header.magic = LV_IMAGE_HEADER_MAGIC;
+      ground_.header.cf = LV_COLOR_FORMAT_RGB565;
+      ground_.header.w = w;
+      ground_.header.h = h;
+      ground_.header.stride = w * 2;
+      ground_.data = ground_px_;
+      ground_.data_size = bytes;
+      ground_tone_ = tone_;
+      lv_obj_set_style_bg_image_src(card_, nullptr, 0);
+      lv_obj_invalidate(card_);
+    }
+    if (lv_obj_get_style_bg_image_src(card_, LV_PART_MAIN) != &ground_)
+      lv_obj_set_style_bg_image_src(card_, &ground_, 0);
+    if (lv_obj_get_style_bg_grad_dir(card_, LV_PART_MAIN) != LV_GRAD_DIR_NONE)
+      lv_obj_set_style_bg_grad_dir(card_, LV_GRAD_DIR_NONE, 0);
+  }
+
   TesseraMusic *plugin_;
   std::string player_;
   lv_obj_t *card_{};
   bool tint_{false};
-  uint32_t tone_{0};
+  uint32_t tone_{0}, ground_tone_{0};
+  lv_image_dsc_t ground_{};
+  uint8_t *ground_px_{nullptr};
+  size_t ground_cap_{0};
   bool show_title_{true}, side_by_side_{false};
   Font title_font_{Font::HEADLINE};
   int width_{0}, height_{0}, side_{0}, text_w_{0}, tile_{-1};
