@@ -1,5 +1,7 @@
 {
-  "_meta": { "name": "Deutsch" },
+  "_meta": {
+    "name": "Deutsch"
+  },
   "screen": {
     "connecting": "Verbinde mit Music Assistant",
     "nothing": "Es läuft nichts"
@@ -11,14 +13,16 @@
     "now_example": "Maison · YLLW",
     "ma_host": "Adresse von Music Assistant",
     "ma_host_hint": "Die IP-Adresse im Heimnetz, zum Beispiel 192.168.1.20 (Port 8095).",
-    "ma_token": "Music-Assistant-Token",
-    "ma_token_hint": "Ein langlebiger Token aus Music Assistant, Einstellungen, Profil.",
+    "ma_token": "Music-Assistant-Token, erster Teil",
+    "ma_token_hint": "Die ersten 200 Zeichen eines langlebigen Tokens aus Music Assistant (Einstellungen, Profil). Tessera nimmt höchstens 256 pro Feld.",
     "player": "Raum",
     "player_hint": "Ein Teil des Player-Namens in Music Assistant, zum Beispiel Bad. Leer: was gerade läuft.",
     "title": "Songtitel",
     "title_hint": "Wie groß der Titel ist, oder ausblenden.",
     "title_large": "Groß",
     "title_normal": "Normal",
-    "title_off": "Ausgeblendet"
+    "title_off": "Ausgeblendet",
+    "ma_token_2": "Music-Assistant-Token, der Rest",
+    "ma_token_2_hint": "Alles nach den ersten 200 Zeichen."
   }
 }

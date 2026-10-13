@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.1.0
+version: 0.1.1
 api: "0.8"
 icon: music
 maintainer: abercrombie1892
@@ -17,7 +17,9 @@ flash_kb: 60
 
 inputs:
   - { id: ma_host, kind: text, scope: all, label: ma_host, hint: ma_host_hint }
+  # Tessera takes at most 256 characters per input; a Music Assistant token has about 390: two halves, joined here.
   - { id: ma_token, kind: text, scope: all, label: ma_token, hint: ma_token_hint }
+  - { id: ma_token_2, kind: text, scope: all, label: ma_token_2, hint: ma_token_2_hint }
 
 tiles:
   - id: now_playing

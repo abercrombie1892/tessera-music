@@ -11,7 +11,8 @@ for the index: add it to your screens by its link.
 
 1. In Tessera, Plugins, add this repository by its link and choose your screen. The screen builds once.
 2. Fill in the address of Music Assistant (its IP address on your network) and a long-lived token from Music
-   Assistant (Settings, Profile).
+   Assistant (Settings, Profile): its first 200 characters in the first token field, the rest in the second
+   (Tessera takes at most 256 characters per field).
 3. In Layout, place the **Now playing** tile from the library's Plugins group, at least 2 x 2.
 4. In the inspector, type part of the room's player name as Music Assistant shows it (such as `Bad`), or leave it
    empty to follow whatever plays.

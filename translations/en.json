@@ -1,5 +1,7 @@
 {
-  "_meta": { "name": "English" },
+  "_meta": {
+    "name": "English"
+  },
   "screen": {
     "connecting": "Connecting to Music Assistant",
     "nothing": "Nothing playing"
@@ -11,14 +13,16 @@
     "now_example": "Maison · YLLW",
     "ma_host": "Music Assistant address",
     "ma_host_hint": "Its IP address on your network, such as 192.168.1.20 (port 8095).",
-    "ma_token": "Music Assistant token",
-    "ma_token_hint": "A long-lived token from Music Assistant, Settings, Profile.",
+    "ma_token": "Music Assistant token, first part",
+    "ma_token_hint": "The first 200 characters of a long-lived token from Music Assistant (Settings, Profile). Tessera takes at most 256 per field.",
     "player": "Room",
     "player_hint": "Part of the player's name in Music Assistant, such as Bath. Empty: whatever plays.",
     "title": "Track title",
     "title_hint": "How large the title is, or hide it.",
     "title_large": "Large",
     "title_normal": "Normal",
-    "title_off": "Hidden"
+    "title_off": "Hidden",
+    "ma_token_2": "Music Assistant token, the rest",
+    "ma_token_2_hint": "Everything after the first 200 characters."
   }
 }
