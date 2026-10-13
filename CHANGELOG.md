@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+- The tile's new option Background: plain like every tile, or in the colours of the cover that plays (lighter at the
+  top, darker at the foot, white words), found as the dashboard's glow finds them. Its colour follows the track.
+
 ## 0.3.2
 - Covers show again: a picture cut to its exact square told LVGL fewer bytes than stride x height, and LVGL refused to
   open it ("Failed to open image").

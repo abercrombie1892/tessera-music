@@ -21,6 +21,23 @@ static std::string clock_of(uint32_t seconds) {
   return text;
 }
 
+// A cover's colour as a lit ground for white words (the dashboard's glow_color): saturated a little more, and never
+// brighter than `peak`, less for a grey cover.
+static lv_color_t lit(uint32_t tone, float peak) {
+  float r = (tone >> 16) & 0xFF, g = (tone >> 8) & 0xFF, b = tone & 0xFF;
+  const float hi = std::max({r, g, b, 1.0f}), lo = std::min({r, g, b}), avg = (r + g + b) / 3;
+  r = std::max(0.0f, avg + (r - avg) * 1.2f), g = std::max(0.0f, avg + (g - avg) * 1.2f),
+  b = std::max(0.0f, avg + (b - avg) * 1.2f);
+  peak *= 0.4f + 0.6f * std::min(1.0f, (hi - lo) / hi * 2.0f);
+  const float scale = peak / std::max({r, g, b, 1.0f});
+  return lv_color_make((uint8_t) (r * scale), (uint8_t) (g * scale), (uint8_t) (b * scale));
+}
+
+static void text_color(lv_obj_t *label, uint32_t color) {
+  if (!lv_color_eq(lv_obj_get_style_text_color(label, LV_PART_MAIN), lv_color_hex(color)))
+    lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
+}
+
 // Now playing: the cover, the title, the artist and how far the track is, for one room or whatever plays.
 class NowTile : public tessera::Tile {
  public:
@@ -30,6 +47,8 @@ class NowTile : public tessera::Tile {
     width_ = c.width;
     height_ = c.height;
     tile_ = c.tile;
+    card_ = lv_obj_get_parent(c.parent);
+    tint_ = std::string(c.options["background"] | "theme") == "cover";
     player_ = c.options["player"] | "";
     const std::string title = c.options["title"] | "large";
     show_title_ = title != "off";
@@ -103,10 +122,11 @@ class NowTile : public tessera::Tile {
     ui::set_text(total_, duration ? clock_of(duration) : "");
     const int filled = duration ? (int) ((int64_t) text_w_ * std::min(elapsed, duration) / duration) : 0;
     if (lv_obj_get_width(fill_) != filled) lv_obj_set_width(fill_, filled);
-    ui::set_color(artist_, playing ? theme::MUTED : theme::SUBTLE);
+    if (!tint_) ui::set_color(artist_, playing ? theme::MUTED : theme::SUBTLE);
 
     plugin_->cover().request(now.image_url, side_);
     paint_cover_();
+    if (tint_) paint_tint_();
   }
 
   void on_theme() override {
@@ -115,6 +135,7 @@ class NowTile : public tessera::Tile {
     ui::set_color(elapsed_, theme::SUBTLE);
     ui::set_color(total_, theme::SUBTLE);
     ui::set_color(note_, theme::MUTED);
+    if (tint_) paint_tint_();
   }
 
   void on_tap() override { tessera::open_card(plugin_->plugin_id(), "player", "", tile_); }
@@ -135,8 +156,34 @@ class NowTile : public tessera::Tile {
     lv_obj_add_flag(note_, LV_OBJ_FLAG_HIDDEN);
   }
 
+  // The card in the cover's colours, top lighter than the foot, with light words. Tessera colours its cards again when
+  // it draws them: every tick puts the cover's colours back (only when they differ).
+  void paint_tint_() {
+    const uint32_t tone = plugin_->cover().tone();
+    if (tone != 0) tone_ = tone;
+    if (tone_ == 0) return;
+    const lv_color_t top = lit(tone_, 140), foot = lit(tone_, 70);
+    if (!lv_color_eq(lv_obj_get_style_bg_color(card_, LV_PART_MAIN), top)) lv_obj_set_style_bg_color(card_, top, 0);
+    if (!lv_color_eq(lv_obj_get_style_bg_grad_color(card_, LV_PART_MAIN), foot))
+      lv_obj_set_style_bg_grad_color(card_, foot, 0);
+    if (lv_obj_get_style_bg_grad_dir(card_, LV_PART_MAIN) != LV_GRAD_DIR_VER)
+      lv_obj_set_style_bg_grad_dir(card_, LV_GRAD_DIR_VER, 0);
+    text_color(title_, 0xF4F1EC);
+    text_color(artist_, 0xE6E1D9);
+    text_color(elapsed_, 0xD9D4CC);
+    text_color(total_, 0xD9D4CC);
+    if (lv_obj_get_style_bg_opa(track_, LV_PART_MAIN) != 70) {
+      lv_obj_set_style_bg_color(track_, lv_color_hex(0xFFFFFF), 0);
+      lv_obj_set_style_bg_opa(track_, 70, 0);
+      lv_obj_set_style_bg_color(fill_, lv_color_hex(0xFFFFFF), 0);
+    }
+  }
+
   TesseraMusic *plugin_;
   std::string player_;
+  lv_obj_t *card_{};
+  bool tint_{false};
+  uint32_t tone_{0};
   bool show_title_{true}, side_by_side_{false};
   Font title_font_{Font::HEADLINE};
   int width_{0}, height_{0}, side_{0}, text_w_{0}, tile_{-1};

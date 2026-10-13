@@ -53,21 +53,23 @@ static ppa_client_handle_t scaler() {
 
 static uint32_t align_up(uint32_t value, uint32_t to) { return (value + to - 1) / to * to; }
 
-// The mean colour of a little-endian RGB565 picture, from a grid of samples.
+// The cover's colour, as the dashboard's glow finds it (vivid_mean): vivid pixels count, grey and black barely do.
 static uint32_t mean_tone(const uint8_t *pixels, uint32_t stride_px, uint32_t side) {
-  uint32_t r = 0, g = 0, b = 0, n = 0;
-  const uint32_t step = std::max<uint32_t>(1, side / 24);
+  float r = 0, g = 0, b = 0, total = 0;
+  const uint32_t step = std::max<uint32_t>(1, side / 32);
   for (uint32_t y = 0; y < side; y += step)
     for (uint32_t x = 0; x < side; x += step) {
       const uint8_t *p = pixels + (y * stride_px + x) * 2;
       const uint16_t v = static_cast<uint16_t>(p[0] | (p[1] << 8));
-      r += (v >> 11) & 0x1F;
-      g += (v >> 5) & 0x3F;
-      b += v & 0x1F;
-      n++;
+      const float pr = ((v >> 11) & 0x1F) * (255.0f / 31), pg = ((v >> 5) & 0x3F) * (255.0f / 63),
+                  pb = (v & 0x1F) * (255.0f / 31);
+      const float hi = std::max({pr, pg, pb}), lo = std::min({pr, pg, pb});
+      const float weight = (hi > 0 ? (hi - lo) / 255.0f : 0) + 0.02f;
+      r += pr * weight, g += pg * weight, b += pb * weight, total += weight;
     }
-  if (n == 0) return 0;
-  return ((r * 255 / 31 / n) << 16) | ((g * 255 / 63 / n) << 8) | (b * 255 / 31 / n);
+  if (total <= 0) return 0;
+  const auto channel = [&](float sum) { return static_cast<uint32_t>(std::min(255.0f, sum / total)); };
+  return (channel(r) << 16) | (channel(g) << 8) | channel(b);
 }
 
 // One download at a time, into one buffer the JPEG hardware reads from: the loader that has it, and the buffer.

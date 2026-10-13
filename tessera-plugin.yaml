@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.3.2
+version: 0.3.3
 api: "0.8"
 icon: music
 maintainer: abercrombie1892
@@ -34,6 +34,8 @@ tiles:
       - { id: title, kind: choice, label: title, hint: title_hint, default: large,
           choices: [{ value: large, label: title_large }, { value: normal, label: title_normal },
                     { value: "off", label: title_off }] }
+      - { id: background, kind: choice, label: background, hint: background_hint, default: theme,
+          choices: [{ value: theme, label: background_theme }, { value: cover, label: background_cover }] }
 
 # The player over the whole glass, opened by a tap on the tile.
 cards:

@@ -26,6 +26,10 @@
     "ma_token_2_hint": "Everything after the first 200 characters.",
     "card_name": "Player",
     "ma_rooms": "Rooms on the dashboard",
-    "ma_rooms_hint": "The player names from Music Assistant in your order, with commas. Only these show. = gives one a name of its own: Living Room Sonos=Living Room, Bath, PC. Empty: all."
+    "ma_rooms_hint": "The player names from Music Assistant in your order, with commas. Only these show. = gives one a name of its own: Living Room Sonos=Living Room, Bath, PC. Empty: all.",
+    "background": "Background",
+    "background_hint": "Plain like every tile, or in the colours of the cover that plays.",
+    "background_theme": "Plain",
+    "background_cover": "Cover colours"
   }
 }
