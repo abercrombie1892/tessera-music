@@ -22,7 +22,8 @@ music_assistant_ns = cg.esphome_ns.namespace("music_assistant")
 MusicAssistant = music_assistant_ns.class_("MusicAssistant", cg.Component)
 
 def rooms(value):
-    """The rooms to show, in order: a list, or one text with commas (a plugin input in Tessera)."""
+    """The rooms to show, in order: a list, or one text with commas (a plugin input in Tessera). "MA name=Shown name"
+    shows a room under a name of its own."""
     if isinstance(value, str):
         value = [name.strip() for name in value.split(",") if name.strip()]
     return cv.ensure_list(cv.string_strict)(value)
@@ -53,6 +54,7 @@ async def to_code(config):
     for tok in config[CONF_FALLBACK_TOKENS]:
         cg.add(var.add_token(tok))
     cg.add(var.set_poll_interval(config[CONF_POLL_INTERVAL]))
-    for name in config[CONF_PLAYERS]:
-        if name:
-            cg.add(var.add_player_filter(name))
+    for room in config[CONF_PLAYERS]:
+        name, _, alias = room.partition("=")
+        if name.strip():
+            cg.add(var.add_player_filter(name.strip(), alias.strip()))

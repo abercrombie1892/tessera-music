@@ -16,6 +16,7 @@ static constexpr uint32_t WHITE = 0xFFFFFF;
 static const char *const GLYPH_DOWN = "\U000F0140";
 static const char *const GLYPH_SPEAKER = "\U000F04C3";
 static const char *const GLYPH_GRID = "\U000F11D9";
+static const char *const GLYPH_LIBRARY = "\U000F0411";  // playlist-play, in the icon font's glyphs
 static const char *const GLYPH_SHUFFLE = "\U000F049F";
 static const char *const GLYPH_PREV = "\U000F04AE";
 static const char *const GLYPH_NEXT = "\U000F04AD";
@@ -25,6 +26,7 @@ static const char *const GLYPH_REPEAT_OFF = "\U000F0457";
 static lv_obj_t *obj(lv_obj_t *parent, int x, int y, int w, int h, int radius, uint32_t color, lv_opa_t opa,
                      bool border) {
   lv_obj_t *o = make_box(parent, x, y, w, h, radius);
+  lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);  // the YAML's clickable: false; the keys say so themselves
   lv_obj_set_style_bg_color(o, lv_color_hex(color), 0);
   lv_obj_set_style_bg_opa(o, opa, 0);
   if (border) {
@@ -65,6 +67,7 @@ static lv_obj_t *picture(lv_obj_t *parent, int x, int y, int side, int radius) {
 
 static lv_obj_t *screen(lv_obj_t *dashboard, bool hidden) {
   lv_obj_t *s = make_box(dashboard, 0, 0, 720, 720, 0);
+  lv_obj_remove_flag(s, LV_OBJ_FLAG_CLICKABLE);
   if (hidden) lv_obj_add_flag(s, LV_OBJ_FLAG_HIDDEN);
   return s;
 }
@@ -87,10 +90,13 @@ static void build_topbar(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   lv_label_set_text(chevron, GLYPH_DOWN);
   lv_obj_align(chevron, LV_ALIGN_LEFT_MID, 292, 0);
 
-  h.clock_lbl = make_label(s, f.text30, COL_TEXT, 430, 27, 200);
+  // the clock gives the library key room: it ends at 570 instead of 630
+  h.clock_lbl = make_label(s, f.text30, COL_TEXT, 430, 27, 140);
   lv_obj_set_style_text_align(h.clock_lbl, LV_TEXT_ALIGN_RIGHT, 0);
   lv_label_set_text(h.clock_lbl, "--:--");
 
+  h.library_btn = glass(s, 588, 20, 52, 52);
+  icon(h.library_btn, f.icon28, GLYPH_LIBRARY, COL_TEXT);
   h.grid_btn = glass(s, 648, 20, 52, 52);
   icon(h.grid_btn, f.icon28, GLYPH_GRID, COL_TEXT);
 }
@@ -127,6 +133,7 @@ static void build_next_up(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   lv_obj_set_style_text_align(h.next_count, LV_TEXT_ALIGN_RIGHT, 0);
   for (int i = 0; i < 2; i++) {
     h.tiles[i] = make_box(h.queue_btn, 10, 40 + i * 54, 316, 50, 0);
+    lv_obj_remove_flag(h.tiles[i], LV_OBJ_FLAG_CLICKABLE);  // a tap anywhere on the card opens the list
     h.tile_img[i] = picture(h.tiles[i], 6, 3, 44, 10);
     h.tile_title[i] = line(h.tiles[i], f.text17, COL_TEXT, 60, 4, 250, 22);
     h.tile_artist[i] = line(h.tiles[i], f.text14, COL_DIM, 60, 27, 250, 18);

@@ -488,12 +488,24 @@ void MusicAssistant::parse_players_(JsonArrayConst result) {
     if (player_filter_.empty()) {
         players_ = std::move(all);
     } else {
-        for (const auto &name : player_filter_)
+        for (const auto &room : player_filter_)
             for (auto &pl : all)
-                if (pl.display_name == name) { players_.push_back(std::move(pl)); break; }
+                if (pl.display_name == room.first) {
+                    rename_(pl);
+                    players_.push_back(std::move(pl));
+                    break;
+                }
     }
     ESP_LOGI(TAG, "player list: %u of %u players", (unsigned) players_.size(), (unsigned) result.size());
     after_players_changed_(true);
+}
+
+void MusicAssistant::rename_(MAPlayer &player) const {
+    for (const auto &room : player_filter_)
+        if (room.first == player.display_name && !room.second.empty()) {
+            player.display_name = room.second;
+            return;
+        }
 }
 
 // One player from the round-robin players/get poll.
@@ -501,6 +513,7 @@ void MusicAssistant::parse_player_update_(JsonObjectConst po) {
     MAPlayer pl = parse_player(po);
     const int idx = player_index(pl.player_id);
     if (idx < 0) return;
+    rename_(pl);
     const bool selected = idx == selected_player_;
     players_[idx] = std::move(pl);
     after_players_changed_(selected);

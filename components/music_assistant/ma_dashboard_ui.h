@@ -28,6 +28,7 @@ struct Handles {
   lv_obj_t *screen1 = nullptr;
   lv_obj_t *screen2 = nullptr;
   lv_obj_t *grid_btn = nullptr;  // topbar grid button -> screen 2
+  lv_obj_t *library_btn = nullptr;  // topbar library button -> screen 3, playlists
   lv_obj_t *screen3 = nullptr;
   lv_obj_t *queue_btn = nullptr;  // "Als Nächstes" list button -> screen 3
   ma_rooms::Fonts fonts;

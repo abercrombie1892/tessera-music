@@ -28,7 +28,7 @@ void build(lv_obj_t *screen, MusicAssistant *client, const widgets::Fonts &fonts
            artwork_image::ArtworkImage *cover_dl,
            artwork_image::ArtworkImage *const thumb_dl[THUMB_SLOTS],
            bool compact, Hooks hooks);  // compact: 720x720, no now-playing column
-void shown();                        // screen became visible
+void shown(int tab = 0);             // screen became visible, on this tab (0 = queue)
 void release();                      // dashboard closed: drop pending fetches
 void refresh();                      // data changed
 void tick(const char *clock_text);   // 1 s while visible: clock, progress, covers

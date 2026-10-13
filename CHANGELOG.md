@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+- A library key beside the grid key opens the playlists at once (the clock moves left for it).
+- A tap on the "next up" box opens the list wherever it lands: its two tracks no longer take the tap (clickable: false,
+  as in the YAML), and nor do the speaker dot and the group badge in the room pill.
+- Rooms on the dashboard can have a name of their own: "Wohnzimmer Sonos=Wohnzimmer, Bad, PC".
+
 ## 0.3.0
 - A tap on the tile opens the espcontrol MA dashboard itself, over the whole glass: its own code (ma_dashboard_ui,
   ma_rooms_ui, ma_queue_ui, ma_widgets, ma_theme), its skeleton from ma_dashboard.yaml made in C++ with the same places,

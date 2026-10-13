@@ -604,9 +604,9 @@ static void select_tab(int tab) {
   refresh();
 }
 
-void shown() {
+void shown(int tab) {
   if (!s_built) return;
-  select_tab(0);  // the list button always lands on the queue
+  select_tab(tab);  // the list button lands on the queue, the library button on the playlists
   update_progress();
 }
 

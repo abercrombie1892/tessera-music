@@ -26,6 +26,6 @@
     "ma_token_2_hint": "Alles nach den ersten 200 Zeichen.",
     "card_name": "Player",
     "ma_rooms": "Räume im Dashboard",
-    "ma_rooms_hint": "Die Player-Namen aus Music Assistant in deiner Reihenfolge, mit Komma getrennt, zum Beispiel PC, Küche, Bad. Leer: alle."
+    "ma_rooms_hint": "Die Player-Namen aus Music Assistant in deiner Reihenfolge, mit Komma getrennt. Nur diese erscheinen. Mit = gibst du einem einen eigenen Namen: Wohnzimmer Sonos=Wohnzimmer, Bad, PC. Leer: alle."
   }
 }

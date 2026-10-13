@@ -101,7 +101,10 @@ class MusicAssistant : public Component {
     void set_token(const std::string &token) { tokens_.insert(tokens_.begin(), token); token_ = token; }
     void add_token(const std::string &token) { if (!token.empty()) tokens_.push_back(token); }
     void set_poll_interval(uint32_t ms) { poll_interval_ms_ = ms; }
-    void add_player_filter(const std::string &display_name) { player_filter_.push_back(display_name); }
+    /// A room to show, in order; `alias` is the name the dashboard shows instead ("" keeps MA's).
+    void add_player_filter(const std::string &display_name, const std::string &alias = "") {
+        player_filter_.push_back({display_name, alias});
+    }
 
     bool is_connected() const { return stage_ == Stage::READY; }
     size_t player_count() const { return players_.size(); }
@@ -252,7 +255,8 @@ class MusicAssistant : public Component {
     uint32_t last_attempt_ms_ = 0;
     int selected_player_ = 0;
     std::string selected_id_;       // selection survives list reordering/filtering
-    std::vector<std::string> player_filter_;
+    std::vector<std::pair<std::string, std::string>> player_filter_;  // MA's name, the name shown
+    void rename_(MAPlayer &player) const;
     std::string pinned_;            // lowercase part of a display name, "" = auto-focus
     uint32_t user_select_ms_ = 0;  // last manual selection, gates auto-focus
     std::vector<MAPlayer> players_;

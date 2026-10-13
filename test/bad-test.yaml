@@ -14,7 +14,7 @@ packages:
     ref: main
     files: [packages/wavesharep4.yaml]
     refresh: 1d
-  plugin_tessera_music: !include {file: ../plugin.yaml, vars: {MA_HOST: "192.168.1.20", MA_TOKEN: "dummy", MA_ROOMS: "PC, Küche, Bad"}}
+  plugin_tessera_music: !include {file: ../plugin.yaml, vars: {MA_HOST: "192.168.1.20", MA_TOKEN: "dummy", MA_ROOMS: "PC, Wohnzimmer Sonos=Wohnzimmer, Bad"}}
 
 external_components:
   - source: {type: local, path: ../components}

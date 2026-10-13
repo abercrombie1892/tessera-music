@@ -159,7 +159,7 @@ static void watch_touch_input() {
 
 static int s_screen = 1;
 
-static void show_screen(int screen) {
+static void show_screen(int screen, int tab = 0) {
   s_screen = screen;
   if (H.screen1 != nullptr) (screen == 1 ? lv_obj_clear_flag : lv_obj_add_flag)(H.screen1, LV_OBJ_FLAG_HIDDEN);
   if (H.screen2 != nullptr) (screen == 2 ? lv_obj_clear_flag : lv_obj_add_flag)(H.screen2, LV_OBJ_FLAG_HIDDEN);
@@ -167,7 +167,7 @@ static void show_screen(int screen) {
   const char *clock = H.clock_src != nullptr ? lv_label_get_text(H.clock_src) : nullptr;
   if (screen == 2) ma_rooms::tick(clock);
   if (screen == 3) {
-    ma_queue::shown();
+    ma_queue::shown(tab);
     ma_queue::tick(clock);
   }
 }
@@ -178,6 +178,10 @@ static void on_open_rooms(lv_event_t *) {
 
 static void on_open_queue(lv_event_t *) {
   guard_and([]() { show_screen(3); });
+}
+
+static void on_open_library(lv_event_t *) {
+  guard_and([]() { show_screen(3, 1); });
 }
 
 static bool s_progress_dragging = false;
@@ -832,6 +836,7 @@ void bind(MusicAssistant *client, const Handles &h,
   click(H.player_pill, on_open_rooms, nullptr);
   click(H.grid_btn, on_open_rooms, nullptr);
   click(H.queue_btn, on_open_queue, nullptr);
+  click(H.library_btn, on_open_library, nullptr);
 
   // square 720x720 screen: rooms as a list, queue without the cover column
   const bool compact = lv_obj_get_style_width(H.dashboard, LV_PART_MAIN) < 1000;
