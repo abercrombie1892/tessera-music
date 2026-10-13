@@ -120,7 +120,7 @@ static void build_now(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   h.title = line(s, f.text34, COL_TEXT, 364, 132, 336, 46);
   lv_label_set_text(h.title, "—");
   h.artist = line(s, f.text20, COL_TEXT2, 364, 184, 336, 26);
-  h.album = line(s, f.text17, COL_DIM, 364, 214, 336, 22);
+  h.album = line(s, f.text17, COL_DIM, 364, 218, 336, 22);  // 214 in the YAML: room for the larger artist line
 }
 
 // Als Nächstes: 2 tiles; the whole card opens screen 3

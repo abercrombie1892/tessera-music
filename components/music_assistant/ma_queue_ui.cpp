@@ -279,7 +279,7 @@ static void build_row(int i) {
   lv_obj_remove_flag(r.cover, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_add_flag(r.cover, LV_OBJ_FLAG_HIDDEN);
 
-  const int title_y = G.compact ? 9 : 12, artist_y = G.compact ? 36 : 42;
+  const int title_y = G.compact ? 7 : 12, artist_y = G.compact ? 38 : 42;  // compact: room for the larger fonts
   r.title = make_label(r.root, F.text20, COL_TEXT, G.text_x, title_y, G.text_w);
   r.artist = make_label(r.root, F.text14, COL_DIM, G.text_x, artist_y, G.text_w);
   r.dur = make_label(r.root, F.text17, COL_DIM, 0, 0, G.compact ? 60 : 80);

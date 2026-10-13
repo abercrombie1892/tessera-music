@@ -13,11 +13,11 @@ music_assistant:
   players: "${MA_ROOMS}"
 
 # The espcontrol MA dashboard's fonts (ma_dashboard.yaml): Outfit only, and the MDI icons it draws. The three small
-# sizes are 2 px larger than the panel's (14/17/20 -> 16/19/22): on the 4-inch glass they were under 2 mm.
+# sizes are 4 px larger than the panel's (14/17/20 -> 18/21/24): on the 4-inch glass they were under 2 mm.
 font:
   - file: "gfonts://Outfit@400"
     id: tm_outfit_14
-    size: 16
+    size: 18
     bpp: 4
     glyphs: &tm_outfit_glyphs
       - " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_`abcdefghijklmnopqrstuvwxyz{|}~"
@@ -27,12 +27,12 @@ font:
       - "ĀāĂăĄąĆćĊċČčĎďĐđĒēĖėĘęĚěĞğĠġĢģĦħĪīĮįİıĲĳĶķĹĺĻļĽľŁłŃńŅņŇňŊŋŌōŐőŒœŔŕŖŗŘřŚśŞşŠšŤťŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽž"
   - file: "gfonts://Outfit@400"
     id: tm_outfit_17
-    size: 19
+    size: 21
     bpp: 4
     glyphs: *tm_outfit_glyphs
   - file: "gfonts://Outfit@500"
     id: tm_outfit_20
-    size: 22
+    size: 24
     bpp: 4
     glyphs: *tm_outfit_glyphs
   - file: "gfonts://Outfit@400"

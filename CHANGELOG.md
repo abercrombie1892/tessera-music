@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.9
+- The small print one step larger again: 18, 21 and 24 px (the panel had 14, 17 and 20). The album line and the queue
+  rows' second line move down a little to make room.
+
 ## 0.3.8
 - Larger small print on the dashboard: Outfit 14, 17 and 20 px are now 16, 19 and 22 px (status, next up, times, album,
   artist, room names, list rows). The title, the clock, the icons and every place stay as they were; a line with a fixed
