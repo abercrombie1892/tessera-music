@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+- The player looks like the espcontrol MA dashboard: a dark ground lit by the cover's colour, glass keys, the orange
+  play key, the track's waveform as its progress, the time left, a volume pill along the bottom.
+- The room pill (with the group's size) and the grid key open the rooms; the "next up" box shows the next two tracks
+  and opens the queue and the library, a segmented control over one list. The tabs along the top are gone.
+
 ## 0.2.0
 - A tap on the tile opens the player over the whole glass, as the espcontrol dashboard did: the cover, the title, the
   artist and the album, a bar to seek, previous, play or pause and next, shuffle, repeat, favourite, mute and volume.

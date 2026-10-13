@@ -53,6 +53,23 @@ static ppa_client_handle_t scaler() {
 
 static uint32_t align_up(uint32_t value, uint32_t to) { return (value + to - 1) / to * to; }
 
+// The mean colour of a little-endian RGB565 picture, from a grid of samples.
+static uint32_t mean_tone(const uint8_t *pixels, uint32_t stride_px, uint32_t side) {
+  uint32_t r = 0, g = 0, b = 0, n = 0;
+  const uint32_t step = std::max<uint32_t>(1, side / 24);
+  for (uint32_t y = 0; y < side; y += step)
+    for (uint32_t x = 0; x < side; x += step) {
+      const uint8_t *p = pixels + (y * stride_px + x) * 2;
+      const uint16_t v = static_cast<uint16_t>(p[0] | (p[1] << 8));
+      r += (v >> 11) & 0x1F;
+      g += (v >> 5) & 0x3F;
+      b += v & 0x1F;
+      n++;
+    }
+  if (n == 0) return 0;
+  return ((r * 255 / 31 / n) << 16) | ((g * 255 / 63 / n) << 8) | (b * 255 / 31 / n);
+}
+
 // One download at a time, into one buffer the JPEG hardware reads from: the loader that has it, and the buffer.
 static CoverLoader *owner = nullptr;
 static uint8_t *body = nullptr;
@@ -343,6 +360,7 @@ bool CoverLoader::decode_() {
   h.h = h.w;
   h.stride = out * 2;
   slot.dsc.data = slot.pixels;
+  tone_ = mean_tone(slot.pixels, out, h.w);
   slot.dsc.data_size = static_cast<uint32_t>(out) * out * 2;
   shown_ = shown_ == 0 ? 1 : 0;
   revision_++;

@@ -5,17 +5,18 @@
   "screen": {
     "connecting": "Verbinde mit Music Assistant",
     "nothing": "Es läuft nichts",
-    "tab_now": "Jetzt",
-    "tab_rooms": "Räume",
     "tab_queue": "Warteschlange",
-    "tab_library": "Bibliothek",
     "shelf_playlists": "Playlists",
     "shelf_radio": "Radio",
     "shelf_favorites": "Favoriten",
     "more": "Mehr laden",
     "loading": "Lädt …",
     "queue_empty": "Die Warteschlange ist leer",
-    "list_empty": "Hier ist nichts"
+    "list_empty": "Hier ist nichts",
+    "next_up": "Als Nächstes",
+    "playing_in": "Spielt in {room}",
+    "paused_in": "Pausiert in {room}",
+    "tracks": "1 Titel | {n} Titel"
   },
   "app": {
     "name": "Music Assistant",

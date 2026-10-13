@@ -22,6 +22,8 @@ class CoverLoader {
   // The picture to show, nullptr while there is none. Changes when a new one is ready (`revision`).
   const lv_image_dsc_t *picture() const { return shown_ < 0 ? nullptr : &slots_[shown_].dsc; }
   uint32_t revision() const { return revision_; }
+  // The cover's mean colour as 0xRRGGBB, for a glow behind it; 0 while there is no picture.
+  uint32_t tone() const { return shown_ < 0 ? 0 : tone_; }
   void clear();
   // Clears and gives the pixels back.
   void release();
@@ -50,7 +52,7 @@ class CoverLoader {
   std::string head_;
   Slot slots_[2];
   int shown_{-1};
-  uint32_t revision_{0};
+  uint32_t revision_{0}, tone_{0};
 };
 
 }  // namespace esphome::tessera_music

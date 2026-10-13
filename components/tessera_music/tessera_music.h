@@ -14,6 +14,8 @@ class TesseraMusic : public Component, public tessera::Plugin {
  public:
   // The rows of a list on the player card, and so the small covers it loads.
   static constexpr int MAX_ROWS = 80;
+  // Those, and the two of the card's "next up" box after them.
+  static constexpr int THUMBS = MAX_ROWS + 2;
 
   void setup() override;
   void loop() override;

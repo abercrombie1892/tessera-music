@@ -147,10 +147,10 @@ class NowTile : public tessera::Tile {
 
 void TesseraMusic::setup() {
   // The small covers of the card's lists live in PSRAM, beside their pixels.
-  void *room = heap_caps_calloc(MAX_ROWS, sizeof(CoverLoader), MALLOC_CAP_SPIRAM);
+  void *room = heap_caps_calloc(THUMBS, sizeof(CoverLoader), MALLOC_CAP_SPIRAM);
   if (room != nullptr) {
     thumbs_ = static_cast<CoverLoader *>(room);
-    for (int i = 0; i < MAX_ROWS; ++i) new (&thumbs_[i]) CoverLoader();
+    for (int i = 0; i < THUMBS; ++i) new (&thumbs_[i]) CoverLoader();
   }
   add_tile("now_playing", [this]() { return new NowTile(this); });
   add_card("player", [this]() { return new PlayerCard(this); }, true);
@@ -158,7 +158,7 @@ void TesseraMusic::setup() {
 
 CoverLoader &TesseraMusic::thumb(int row) {
   static CoverLoader none;
-  return thumbs_ != nullptr && row >= 0 && row < MAX_ROWS ? thumbs_[row] : none;
+  return thumbs_ != nullptr && row >= 0 && row < THUMBS ? thumbs_[row] : none;
 }
 
 void TesseraMusic::follow_room(const std::string &name) {
@@ -169,7 +169,7 @@ void TesseraMusic::card_closed() {
   card_open_ = false;
   card_cover_.release();
   if (thumbs_ != nullptr)
-    for (int i = 0; i < MAX_ROWS; ++i) thumbs_[i].release();
+    for (int i = 0; i < THUMBS; ++i) thumbs_[i].release();
   if (ma_ != nullptr) ma_->release_lists();
 }
 
@@ -180,7 +180,7 @@ void TesseraMusic::loop() {
   card_cover_.poll();
   cover_.poll();
   if (!card_open_ || thumbs_ == nullptr) return;
-  for (int i = 0; i < MAX_ROWS; ++i) thumbs_[i].poll();
+  for (int i = 0; i < THUMBS; ++i) thumbs_[i].poll();
 }
 
 }  // namespace esphome::tessera_music
