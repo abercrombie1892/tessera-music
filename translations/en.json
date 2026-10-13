@@ -30,6 +30,10 @@
     "background": "Background",
     "background_hint": "Plain like every tile, or in the colours of the cover that plays.",
     "background_theme": "Plain",
-    "background_cover": "Cover colours"
+    "background_cover": "Cover colours",
+    "keys": "Keys",
+    "keys_hint": "Previous, play/pause and next on the tile. A tap on the cover opens the dashboard.",
+    "keys_show": "Show",
+    "keys_hide": "Hide"
   }
 }

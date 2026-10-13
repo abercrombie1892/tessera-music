@@ -15,6 +15,7 @@ using tessera::Font;
 namespace ui = tessera::ui;
 
 static constexpr uint32_t ACTIVE_MS = 3000;
+static constexpr uint32_t ICON_PLAY = 0xF040A, ICON_PAUSE = 0xF03E4, ICON_NEXT = 0xF04AD, ICON_PREV = 0xF04AE;
 
 static std::string clock_of(uint32_t seconds) {
   char text[16];
@@ -93,9 +94,13 @@ class NowTile : public tessera::Tile {
     const std::string title = c.options["title"] | "large";
     show_title_ = title != "off";
     title_font_ = title == "normal" ? Font::TITLE : Font::HEADLINE;
+    keys_ = std::string(c.options["keys"] | "show") == "show";
 
-    const int text_h = (show_title_ ? ui::line_height(title_font_) : 0) + ui::line_height(Font::BODY_LARGE) +
-                       ui::px(14) + ui::line_height(Font::BODY);
+    int text_h = (show_title_ ? ui::line_height(title_font_) : 0) + ui::line_height(Font::BODY_LARGE) + ui::px(14) +
+                 ui::line_height(Font::BODY);
+    // The keys take what the card has left beside the cover, a finger's size at most.
+    key_h_ = keys_ ? std::max(ui::mm(6), std::min(ui::mm(9), height_ - text_h - ui::px(10))) : 0;
+    if (keys_) text_h += key_h_ + ui::px(10);
     side_by_side_ = width_ >= height_ * 13 / 10;
     side_ = side_by_side_ ? height_ : std::max(0, std::min(width_, height_ - text_h - ui::px(10)));
 
@@ -140,6 +145,10 @@ class NowTile : public tessera::Tile {
     lv_obj_set_size(total_, text_w - text_w / 2, ui::line_height(Font::BODY));
     lv_obj_set_style_text_align(total_, LV_TEXT_ALIGN_RIGHT, 0);
     text_w_ = text_w;
+    lv_obj_add_flag(art_, LV_OBJ_FLAG_CLICKABLE);  // only the cover opens the dashboard
+    lv_obj_set_user_data(art_, reinterpret_cast<void *>(static_cast<intptr_t>(KEY_COVER)));
+    lv_obj_add_event_cb(art_, on_key_, LV_EVENT_CLICKED, this);
+    if (keys_) build_keys_(c.parent, x, y + ui::line_height(Font::BODY) + ui::px(10), text_w);
   }
 
   void on_tick(uint32_t) override {
@@ -163,6 +172,7 @@ class NowTile : public tessera::Tile {
     const int filled = duration ? (int) ((int64_t) text_w_ * std::min(elapsed, duration) / duration) : 0;
     if (lv_obj_get_width(fill_) != filled) lv_obj_set_width(fill_, filled);
     if (!tint_) ui::set_color(artist_, playing ? theme::MUTED : theme::SUBTLE);
+    if (keys_) ui::set_text(glyph_of(play_), ui::icon(playing ? ICON_PAUSE : ICON_PLAY));
 
     plugin_->cover().request(now.image_url, side_);
     paint_cover_();
@@ -178,7 +188,8 @@ class NowTile : public tessera::Tile {
     if (tint_) paint_tint_();
   }
 
-  void on_tap() override { tessera::open_card(plugin_->plugin_id(), "player", "", tile_); }
+  // The cover and the keys take their own taps; the rest of the card does nothing, so a stray touch changes nothing.
+  void on_tap() override {}
 
  protected:
   void paint_cover_() {
@@ -211,7 +222,62 @@ class NowTile : public tessera::Tile {
       lv_obj_set_style_bg_color(track_, lv_color_hex(0xFFFFFF), 0);
       lv_obj_set_style_bg_opa(track_, 70, 0);
       lv_obj_set_style_bg_color(fill_, lv_color_hex(0xFFFFFF), 0);
+      for (lv_obj_t *key : {prev_, play_, next_}) {
+        if (key == nullptr) continue;
+        lv_obj_set_style_bg_color(key, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_bg_opa(key, key == play_ ? LV_OPA_COVER : 50, 0);
+        text_color(glyph_of(key), key == play_ ? 0x1A1208 : 0xFFFFFF);
+      }
     }
+  }
+
+  enum Key : int { KEY_PREV = 1, KEY_PLAY, KEY_NEXT, KEY_COVER };
+
+  // Previous, play or pause, next: round keys under the words, play the largest, in the middle of the column.
+  void build_keys_(lv_obj_t *parent, int x, int y, int w) {
+    const int small = key_h_ * 4 / 5, gap = std::max(ui::px(10), std::min(ui::px(28), (w - key_h_ - 2 * small) / 4));
+    int at = x + (w - (key_h_ + 2 * small + 2 * gap)) / 2;
+    prev_ = key_(parent, KEY_PREV, ICON_PREV, at, y + (key_h_ - small) / 2, small, theme::TRACK);
+    at += small + gap;
+    play_ = key_(parent, KEY_PLAY, ICON_PLAY, at, y, key_h_, theme::ACCENT);
+    ui::set_color(glyph_of(play_), theme::ON_ACCENT);
+    at += key_h_ + gap;
+    next_ = key_(parent, KEY_NEXT, ICON_NEXT, at, y + (key_h_ - small) / 2, small, theme::TRACK);
+  }
+
+  lv_obj_t *key_(lv_obj_t *parent, int code, uint32_t icon, int x, int y, int side, theme::Role fill) {
+    lv_obj_t *key = ui::block(parent, fill);
+    lv_obj_set_pos(key, x, y);
+    lv_obj_set_size(key, side, side);
+    lv_obj_set_style_radius(key, LV_RADIUS_CIRCLE, 0);
+    lv_obj_add_flag(key, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_bg_opa(key, LV_OPA_60, LV_STATE_PRESSED);
+    lv_obj_set_user_data(key, reinterpret_cast<void *>(static_cast<intptr_t>(code)));
+    lv_obj_add_event_cb(key, on_key_, LV_EVENT_CLICKED, this);
+    lv_obj_t *glyph = ui::label(key, side >= ui::mm(8) ? Font::ICON : Font::ICON_SMALL, theme::INK);
+    ui::set_text(glyph, ui::icon(icon));
+    lv_obj_center(glyph);
+    return key;
+  }
+
+  static lv_obj_t *glyph_of(lv_obj_t *key) { return lv_obj_get_child(key, 0); }
+
+  static void on_key_(lv_event_t *e) {
+    auto *tile = static_cast<NowTile *>(lv_event_get_user_data(e));
+    auto *target = static_cast<lv_obj_t *>(lv_event_get_current_target(e));
+    tile->press_(static_cast<int>(reinterpret_cast<intptr_t>(lv_obj_get_user_data(target))));
+  }
+
+  void press_(int code) {
+    if (code == KEY_COVER) {
+      tessera::open_card(plugin_->plugin_id(), "player", "", tile_);
+      return;
+    }
+    auto *ma = plugin_->ma();
+    if (ma == nullptr || !ma->is_connected()) return;
+    if (code == KEY_PREV) ma->cmd_previous();
+    if (code == KEY_PLAY) ma->cmd_play_pause();
+    if (code == KEY_NEXT) ma->cmd_next();
   }
 
   // The dithered ground as the card's background picture, drawn again for a new colour or size. Tessera colours its
@@ -260,6 +326,9 @@ class NowTile : public tessera::Tile {
   int width_{0}, height_{0}, side_{0}, text_w_{0}, tile_{-1};
   uint32_t cover_revision_{0};
   lv_obj_t *art_{}, *note_{}, *image_{}, *title_{}, *artist_{}, *track_{}, *fill_{}, *elapsed_{}, *total_{};
+  lv_obj_t *prev_{}, *play_{}, *next_{};
+  bool keys_{true};
+  int key_h_{0};
 };
 
 // The card a tap on the tile opens. It draws nothing itself: the dashboard lies over the whole glass, and the card

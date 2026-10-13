@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+- Keys on the tile: previous, play or pause, next, round under the words (light on a cover-coloured ground). The new
+  option Keys hides them.
+- Only a tap on the cover opens the dashboard; the rest of the tile takes no tap, so a stray touch changes nothing.
+
 ## 0.3.9
 - The small print one step larger again: 18, 21 and 24 px (the panel had 14, 17 and 20). The album line and the queue
   rows' second line move down a little to make room.
