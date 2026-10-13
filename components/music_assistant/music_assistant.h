@@ -204,6 +204,7 @@ class MusicAssistant : public Component {
     enum class Pending : uint8_t { NONE, AUTH, PLAYERS, PLAYER, QUEUES, QUEUE_ITEMS, LIBRARY, FAVORITE, WAVEFORM };
 
     bool start_connect_();
+    void poll_connect_();         // the non-blocking connect: done, still going or timed out
     void finish_connect_();       // checks connect result, sends WS upgrade
     void close_socket_();
     void pump_socket_();          // read available frames, dispatch messages
@@ -242,6 +243,7 @@ class MusicAssistant : public Component {
     uint32_t queue_poll_interval_ms_ = 30000;  // + on track change and after own commands
 
     std::unique_ptr<socket::Socket> sock_;
+    uint32_t connect_started_ms_ = 0;
     Stage stage_ = Stage::WAIT_NETWORK;
     // Frame buffer lives in PSRAM: the players/all response is ~60KB and the
     // internal SRAM on this panel is too fragmented for contiguous blocks

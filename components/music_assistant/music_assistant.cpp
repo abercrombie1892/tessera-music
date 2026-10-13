@@ -14,6 +14,8 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <cerrno>
 
 namespace esphome {
 namespace music_assistant {
@@ -134,40 +136,55 @@ static std::string ws_client_frame_(const std::string &payload, uint8_t opcode =
 // ── connection ──────────────────────────────────────────────────────────────
 
 bool MusicAssistant::start_connect_() {
-    // lwIP-native blocking connect with a 2s cap (SO_CONTIMEO), then the
-    // socket goes non-blocking for the pump loop. Blocking-with-timeout is
-    // the only portable state: SO_ERROR==0 while a non-blocking connect is
-    // still in flight is indistinguishable from "done" on lwIP.
-    struct addrinfo hints = {};
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    struct addrinfo *res = nullptr;
-    char port_str[8];
-    snprintf(port_str, sizeof(port_str), "%u", port_);
-    if (getaddrinfo(host_.c_str(), port_str, &hints, &res) != 0 || !res) {
-        ESP_LOGW(TAG, "DNS resolve failed for %s", host_.c_str());
-        return false;
-    }
-
-    sock_ = socket::socket(res->ai_family, SOCK_STREAM, 0);
-    if (!sock_) {
+    // Never waits: an IP address needs no DNS, the connect runs non-blocking and poll_connect_() asks select()
+    // without a timeout on every loop pass whether it is done. A blocking connect froze the screen up to 2 s each
+    // retry while Music Assistant was away. Only a host name still asks DNS (once per attempt, as before).
+    struct sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port_);
+    if (inet_pton(AF_INET, host_.c_str(), &addr.sin_addr) != 1) {
+        struct addrinfo hints = {};
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        struct addrinfo *res = nullptr;
+        if (getaddrinfo(host_.c_str(), nullptr, &hints, &res) != 0 || !res) {
+            ESP_LOGW(TAG, "DNS resolve failed for %s", host_.c_str());
+            return false;
+        }
+        addr.sin_addr = reinterpret_cast<struct sockaddr_in *>(res->ai_addr)->sin_addr;
         freeaddrinfo(res);
-        return false;
     }
-    int conttimeo_ms = 2000;
-    sock_->setsockopt(SOL_SOCKET, SO_CONTIMEO, &conttimeo_ms, sizeof(conttimeo_ms));
-
-    if (sock_->connect(res->ai_addr, res->ai_addrlen) != 0) {
-        ESP_LOGW(TAG, "connect to %s:%u failed", host_.c_str(), port_);
+    sock_ = socket::socket(AF_INET, SOCK_STREAM, 0);
+    if (!sock_ || sock_->get_fd() < 0) {
         sock_.reset();
-        freeaddrinfo(res);
         return false;
     }
-    freeaddrinfo(res);
     sock_->setblocking(false);
-
-    finish_connect_();
+    if (sock_->connect(reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) != 0 && errno != EINPROGRESS) {
+        ESP_LOGW(TAG, "connect to %s:%u failed (errno=%d)", host_.c_str(), port_, errno);
+        sock_.reset();
+        return false;
+    }
+    connect_started_ms_ = millis();
+    stage_ = Stage::CONNECT;
     return true;
+}
+
+// The connect in flight: done when the socket turns writable, given up after CONNECT_TIMEOUT_MS.
+void MusicAssistant::poll_connect_() {
+    const int fd = sock_->get_fd();
+    fd_set writable;
+    FD_ZERO(&writable);
+    FD_SET(fd, &writable);
+    struct timeval none = {};
+    if (::select(fd + 1, nullptr, &writable, nullptr, &none) > 0) {
+        finish_connect_();
+        return;
+    }
+    if (millis() - connect_started_ms_ > CONNECT_TIMEOUT_MS) {
+        ESP_LOGW(TAG, "connect to %s:%u timed out", host_.c_str(), port_);
+        close_socket_();
+    }
 }
 
 void MusicAssistant::finish_connect_() {
@@ -927,10 +944,11 @@ void MusicAssistant::loop() {
         if (host_.empty() || tokens_.empty()) break;
         if (network::is_connected() && millis() - last_attempt_ms_ > RETRY_INTERVAL_MS) {
             last_attempt_ms_ = millis();
-            // start_connect_ blocks up to SO_CONTIMEO (2s) and performs the
-            // WS upgrade handshake on success — one stage, no poll juggling
             start_connect_();
         }
+        break;
+    case Stage::CONNECT:
+        if (sock_) poll_connect_();
         break;
     case Stage::WAIT_INFO:
     case Stage::WAIT_AUTH:

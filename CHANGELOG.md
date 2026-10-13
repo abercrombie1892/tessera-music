@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+- The screen never freezes while Music Assistant is away: the connect runs without waiting (select() on every loop pass,
+  given up after 4 s), and an IP address needs no DNS. Before, each retry could hold the screen for up to 2 s.
+
 ## 0.3.4
 - Names in Turkish, Polish, Czech, Hungarian and the Baltic languages show whole: the dashboard's fonts have the letters
   of Latin Extended-A that Outfit draws (İ ı ğ ş, ł ą ę, č ř ž, ő ű, …), where they showed as boxes before.
