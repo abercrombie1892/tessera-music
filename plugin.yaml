@@ -1,13 +1,85 @@
-# What a screen gets when it takes this plugin. MA_HOST and the token's two halves come from the plugin's inputs in Tessera.
+# What a screen gets when it takes this plugin. MA_HOST and the token's two halves come from the plugin's inputs in Tessera;
+# MA_ROOMS is the rooms the dashboard shows, in order, with commas (empty: every player).
 defaults:
   MA_HOST: ""
   MA_TOKEN: ""
   MA_TOKEN_2: ""
+  MA_ROOMS: ""
 
 music_assistant:
   id: tm_music_assistant
   host: ${MA_HOST}
   token: "${MA_TOKEN}${MA_TOKEN_2}"
+  players: "${MA_ROOMS}"
+
+# The espcontrol MA dashboard's fonts (ma_dashboard.yaml): Outfit only, and the MDI icons it draws.
+font:
+  - file: "gfonts://Outfit@400"
+    id: tm_outfit_14
+    size: 14
+    bpp: 4
+    glyphs: &tm_outfit_glyphs
+      - " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_`abcdefghijklmnopqrstuvwxyz{|}~"
+      - "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ‘’“”–—−·…°"
+      - '"\^•„‚‹›«»¡¿×÷©®™€£§±²³½µ´'
+  - file: "gfonts://Outfit@400"
+    id: tm_outfit_17
+    size: 17
+    bpp: 4
+    glyphs: *tm_outfit_glyphs
+  - file: "gfonts://Outfit@500"
+    id: tm_outfit_20
+    size: 20
+    bpp: 4
+    glyphs: *tm_outfit_glyphs
+  - file: "gfonts://Outfit@400"
+    id: tm_outfit_26
+    size: 26
+    bpp: 4
+    glyphs: *tm_outfit_glyphs
+  - file: "gfonts://Outfit@300"
+    id: tm_outfit_30
+    size: 30
+    bpp: 4
+    glyphs: *tm_outfit_glyphs
+  - file: "gfonts://Outfit@600"
+    id: tm_outfit_34
+    size: 34
+    bpp: 4
+    glyphs: *tm_outfit_glyphs
+  - file: &tm_mdi
+      type: web
+      url: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: tm_icon_24
+    size: 24
+    bpp: 4
+    glyphs: &tm_icon_glyphs "\U000F0141\U000F0140\U000F04C3\U000F11D9\U000F049F\U000F04AE\U000F040A\U000F03E4\U000F04AD\U000F0456\U000F0458\U000F0457\U000F057E\U000F0581\U000F0411\U000F075A\U000F02D1\U000F02D5"
+  - file: *tm_mdi
+    id: tm_icon_28
+    size: 28
+    bpp: 4
+    glyphs: *tm_icon_glyphs
+  - file: *tm_mdi
+    id: tm_icon_34
+    size: 34
+    bpp: 4
+    glyphs: *tm_icon_glyphs
+  - file: *tm_mdi
+    id: tm_icon_48
+    size: 48
+    bpp: 4
+    glyphs: *tm_icon_glyphs
 
 tessera_music:
   music_assistant_id: tm_music_assistant
+  fonts:
+    text14: tm_outfit_14
+    text17: tm_outfit_17
+    text20: tm_outfit_20
+    text26: tm_outfit_26
+    text30: tm_outfit_30
+    text34: tm_outfit_34
+    icon24: tm_icon_24
+    icon28: tm_icon_28
+    icon34: tm_icon_34
+    icon48: tm_icon_48

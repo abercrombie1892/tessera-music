@@ -4,19 +4,7 @@
   },
   "screen": {
     "connecting": "Verbinde mit Music Assistant",
-    "nothing": "Es läuft nichts",
-    "tab_queue": "Warteschlange",
-    "shelf_playlists": "Playlists",
-    "shelf_radio": "Radio",
-    "shelf_favorites": "Favoriten",
-    "more": "Mehr laden",
-    "loading": "Lädt …",
-    "queue_empty": "Die Warteschlange ist leer",
-    "list_empty": "Hier ist nichts",
-    "next_up": "Als Nächstes",
-    "playing_in": "Spielt in {room}",
-    "paused_in": "Pausiert in {room}",
-    "tracks": "1 Titel | {n} Titel"
+    "nothing": "Es läuft nichts"
   },
   "app": {
     "name": "Music Assistant",
@@ -36,6 +24,8 @@
     "title_off": "Ausgeblendet",
     "ma_token_2": "Music-Assistant-Token, der Rest",
     "ma_token_2_hint": "Alles nach den ersten 200 Zeichen.",
-    "card_name": "Player"
+    "card_name": "Player",
+    "ma_rooms": "Räume im Dashboard",
+    "ma_rooms_hint": "Die Player-Namen aus Music Assistant in deiner Reihenfolge, mit Komma getrennt, zum Beispiel PC, Küche, Bad. Leer: alle."
   }
 }

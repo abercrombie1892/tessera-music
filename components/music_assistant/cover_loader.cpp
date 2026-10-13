@@ -353,15 +353,18 @@ bool CoverLoader::decode_() {
     ESP_LOGW(TAG, "PPA could not scale the cover");
     return false;
   }
+  // Exactly the side asked for, from the middle of what the PPA made: the stride keeps the rows apart.
+  const uint32_t scaled = crop * steps / SCALE_STEPS, side = std::min<uint32_t>(scaled, side_);
+  const uint32_t stride = out * 2, inset = (scaled - side) / 2;
   lv_image_header_t &h = slot.dsc.header;
   h.magic = LV_IMAGE_HEADER_MAGIC;
   h.cf = LV_COLOR_FORMAT_RGB565;
-  h.w = crop * steps / SCALE_STEPS;
-  h.h = h.w;
-  h.stride = out * 2;
-  slot.dsc.data = slot.pixels;
-  tone_ = mean_tone(slot.pixels, out, h.w);
-  slot.dsc.data_size = static_cast<uint32_t>(out) * out * 2;
+  h.w = side;
+  h.h = side;
+  h.stride = stride;
+  slot.dsc.data = slot.pixels + inset * stride + inset * 2;
+  slot.dsc.data_size = stride * (side - 1) + side * 2;
+  tone_ = mean_tone(slot.dsc.data, out, side);
   shown_ = shown_ == 0 ? 1 : 0;
   revision_++;
   ESP_LOGI(TAG, "Cover %ux%u -> %u px in %u ms", (unsigned) info.width, (unsigned) info.height, (unsigned) h.w,

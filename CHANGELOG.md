@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+- A tap on the tile opens the espcontrol MA dashboard itself, over the whole glass: its own code (ma_dashboard_ui,
+  ma_rooms_ui, ma_queue_ui, ma_widgets, ma_theme), its skeleton from ma_dashboard.yaml made in C++ with the same places,
+  and its Outfit and MDI fonts. The glow behind the cover is the dashboard's own, dithered, without banding. Covers come
+  from the plugin's cover loader instead of artwork_image, which stays with espcontrol. It closes with its back key, after
+  two minutes untouched, and whenever Tessera closes a card.
+- A new input, the rooms on the dashboard in order, with commas.
+
 ## 0.2.1
 - The player looks like the espcontrol MA dashboard: a dark ground lit by the cover's colour, glass keys, the orange
   play key, the track's waveform as its progress, the time left, a volume pill along the bottom.

@@ -4,19 +4,7 @@
   },
   "screen": {
     "connecting": "Connecting to Music Assistant",
-    "nothing": "Nothing playing",
-    "tab_queue": "Queue",
-    "shelf_playlists": "Playlists",
-    "shelf_radio": "Radio",
-    "shelf_favorites": "Favourites",
-    "more": "Load more",
-    "loading": "Loading …",
-    "queue_empty": "The queue is empty",
-    "list_empty": "Nothing here",
-    "next_up": "Next up",
-    "playing_in": "Playing in {room}",
-    "paused_in": "Paused in {room}",
-    "tracks": "1 track | {n} tracks"
+    "nothing": "Nothing playing"
   },
   "app": {
     "name": "Music Assistant",
@@ -36,6 +24,8 @@
     "title_off": "Hidden",
     "ma_token_2": "Music Assistant token, the rest",
     "ma_token_2_hint": "Everything after the first 200 characters.",
-    "card_name": "Player"
+    "card_name": "Player",
+    "ma_rooms": "Rooms on the dashboard",
+    "ma_rooms_hint": "The player names from Music Assistant in your order, with commas, such as PC, Kitchen, Bath. Empty: all."
   }
 }

@@ -21,6 +21,13 @@ CONF_PLAYERS = "players"
 music_assistant_ns = cg.esphome_ns.namespace("music_assistant")
 MusicAssistant = music_assistant_ns.class_("MusicAssistant", cg.Component)
 
+def rooms(value):
+    """The rooms to show, in order: a list, or one text with commas (a plugin input in Tessera)."""
+    if isinstance(value, str):
+        value = [name.strip() for name in value.split(",") if name.strip()]
+    return cv.ensure_list(cv.string_strict)(value)
+
+
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(MusicAssistant),
@@ -31,7 +38,7 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_FALLBACK_TOKENS, default=[]): cv.ensure_list(cv.string),
         cv.Optional(CONF_POLL_INTERVAL, default="2s"): cv.positive_time_period_milliseconds,
         # MA display names to show, in this order; empty = every player
-        cv.Optional(CONF_PLAYERS, default=[]): cv.ensure_list(cv.string_strict),
+        cv.Optional(CONF_PLAYERS, default=[]): rooms,
     }
 ).extend(cv.COMPONENT_SCHEMA)
 

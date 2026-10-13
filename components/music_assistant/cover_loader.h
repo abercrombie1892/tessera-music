@@ -22,6 +22,8 @@ class CoverLoader {
   // The picture to show, nullptr while there is none. Changes when a new one is ready (`revision`).
   const lv_image_dsc_t *picture() const { return shown_ < 0 ? nullptr : &slots_[shown_].dsc; }
   uint32_t revision() const { return revision_; }
+  // The picture shown is the one last asked for, and nothing is on its way.
+  bool ready() const { return shown_ >= 0 && step_ == Step::IDLE && loaded_url_ == wanted_url_; }
   // The cover's mean colour as 0xRRGGBB, for a glow behind it; 0 while there is no picture.
   uint32_t tone() const { return shown_ < 0 ? 0 : tone_; }
   void clear();

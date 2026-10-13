@@ -1,9 +1,8 @@
 #include "tessera_music.h"
 #include <algorithm>
-#include <new>
 #include <string>
-#include "esp_heap_caps.h"
-#include "player_card.h"
+#include "esphome/components/music_assistant/ma_artwork.h"
+#include "esphome/components/music_assistant/ma_skeleton.h"
 
 namespace esphome::tessera_music {
 
@@ -145,42 +144,83 @@ class NowTile : public tessera::Tile {
   lv_obj_t *art_{}, *note_{}, *image_{}, *title_{}, *artist_{}, *track_{}, *fill_{}, *elapsed_{}, *total_{};
 };
 
-void TesseraMusic::setup() {
-  // The small covers of the card's lists live in PSRAM, beside their pixels.
-  void *room = heap_caps_calloc(THUMBS, sizeof(CoverLoader), MALLOC_CAP_SPIRAM);
-  if (room != nullptr) {
-    thumbs_ = static_cast<CoverLoader *>(room);
-    for (int i = 0; i < THUMBS; ++i) new (&thumbs_[i]) CoverLoader();
+// The card a tap on the tile opens. It draws nothing itself: the dashboard lies over the whole glass, and the card
+// is what Tessera closes on standby, an alert or Back to page 1, as it closes its own.
+class DashboardCard : public tessera::Card {
+ public:
+  explicit DashboardCard(TesseraMusic *plugin) : plugin_(plugin) {}
+  ~DashboardCard() override {
+    plugin_->dashboard_closed();
+    music_assistant::ma_ui::close();
   }
-  add_tile("now_playing", [this]() { return new NowTile(this); });
-  add_card("player", [this]() { return new PlayerCard(this); }, true);
-}
+  void open(const tessera::CardContext &) override { plugin_->open_dashboard(); }
+  void on_tick(uint32_t) override { plugin_->seen(); }
 
-CoverLoader &TesseraMusic::thumb(int row) {
-  static CoverLoader none;
-  return thumbs_ != nullptr && row >= 0 && row < THUMBS ? thumbs_[row] : none;
+ protected:
+  TesseraMusic *plugin_;
+};
+
+void TesseraMusic::setup() {
+  add_tile("now_playing", [this]() { return new NowTile(this); });
+  add_card("player", [this]() { return new DashboardCard(this); }, true);
 }
 
 void TesseraMusic::follow_room(const std::string &name) {
-  if (!card_open_ && ma_ != nullptr) ma_->pin_player(name);
+  if (!dashboard_open_ && ma_ != nullptr) ma_->pin_player(name);
 }
 
-void TesseraMusic::card_closed() {
-  card_open_ = false;
-  card_cover_.release();
-  if (thumbs_ != nullptr)
-    for (int i = 0; i < THUMBS; ++i) thumbs_[i].release();
-  if (ma_ != nullptr) ma_->release_lists();
+bool TesseraMusic::build_dashboard_() {
+  if (built_) return true;
+  for (font::Font *font : fonts_)
+    if (font == nullptr || ma_ == nullptr) return false;
+  // The time for the dashboard's clock, as espcontrol's display_time label was.
+  clock_ = lv_label_create(lv_layer_top());
+  lv_obj_add_flag(clock_, LV_OBJ_FLAG_HIDDEN);
+  lv_label_set_text(clock_, "--:--");
+  const music_assistant::ma_skeleton::Fonts fonts{
+      fonts_[0]->get_lv_font(), fonts_[1]->get_lv_font(), fonts_[2]->get_lv_font(), fonts_[3]->get_lv_font(),
+      fonts_[4]->get_lv_font(), fonts_[5]->get_lv_font(), fonts_[6]->get_lv_font(), fonts_[7]->get_lv_font(),
+      fonts_[8]->get_lv_font(), fonts_[9]->get_lv_font()};
+  const auto handles = music_assistant::ma_skeleton::build(lv_layer_top(), fonts, clock_);
+  music_assistant::ma_ui::bind(
+      ma_, handles, []() {},
+      // the dashboard closed itself (its back key, two minutes untouched): the card goes with it
+      [this]() {
+        dashboard_open_ = false;
+        tessera::close_card();
+      },
+      []() {});
+  built_ = true;
+  return true;
+}
+
+void TesseraMusic::open_dashboard() {
+  if (!build_dashboard_()) {
+    tessera::close_card();
+    return;
+  }
+  // The rooms screen chooses the room now: the tile's room stays chosen for a while, then the dashboard follows
+  // what plays, as it always did.
+  const int room = ma_->selected_player();
+  ma_->pin_player("");
+  if (room >= 0 && room < (int) ma_->player_count()) ma_->select_player_user(room);
+  dashboard_open_ = true;
+  seen();
+  music_assistant::ma_ui::open();
 }
 
 void TesseraMusic::loop() {
   const bool active = seen_ms_ != 0 && millis() - seen_ms_ < ACTIVE_MS;
-  if (ma_ != nullptr) ma_->set_ui_active(active);
-  if (!active) return;
-  card_cover_.poll();
-  cover_.poll();
-  if (!card_open_ || thumbs_ == nullptr) return;
-  for (int i = 0; i < THUMBS; ++i) thumbs_[i].poll();
+  if (ma_ != nullptr && !dashboard_open_) ma_->set_ui_active(active);
+  if (active) cover_.poll();
+  if (!dashboard_open_) return;
+  artwork_image::ArtworkImage::poll_all();
+  if (millis() - clock_ms_ >= 1000) {
+    clock_ms_ = millis();
+    const uint32_t now = tessera::epoch();
+    if (now != 0) lv_label_set_text(clock_, tessera::clock_text(now).c_str());
+  }
+  music_assistant::ma_ui::refresh();
 }
 
 }  // namespace esphome::tessera_music

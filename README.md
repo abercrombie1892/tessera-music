@@ -21,9 +21,9 @@ LVGL, which `tools/check.py` refuses: a card has no `on_tap` of its own in plugi
 
 ## Good to know
 
-- A tap on the tile opens the player: Now, Rooms, Queue and Library along the top. Back goes to Now first, then
-  closes the player.
-- A room chosen in the player stays while the player is open; the tile keeps its own room.
+- A tap on the tile opens the espcontrol MA dashboard over the whole glass (720 x 720, the Waveshare 4-inch): now
+  playing, the rooms (the pill or the grid key) and the queue with the library (the next-up box).
+- The rooms on the dashboard: the input "Rooms on the dashboard", player names in order with commas; empty for all.
 - Music Assistant is asked often only while a tile of this plugin is on the glass.
 - Covers come from Music Assistant's image proxy and are decoded by the screen's JPEG hardware; a PNG or progressive
   JPEG cover shows the music note instead.
