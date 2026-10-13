@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.3.7
+version: 0.3.8
 api: "0.8"
 icon: music
 maintainer: abercrombie1892

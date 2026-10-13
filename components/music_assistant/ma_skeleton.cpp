@@ -2,6 +2,8 @@
 #include "ma_theme.h"
 #include "ma_widgets.h"
 
+#include <algorithm>
+
 namespace esphome {
 namespace music_assistant {
 namespace ma_skeleton {
@@ -46,7 +48,7 @@ static lv_obj_t *glass(lv_obj_t *parent, int x, int y, int w, int h, lv_opa_t op
 // A label with `long_mode: dot`, a width and a height of its own (the YAML's labels with height:).
 static lv_obj_t *line(lv_obj_t *parent, const lv_font_t *font, uint32_t color, int x, int y, int w, int h) {
   lv_obj_t *l = make_label(parent, font, color, x, y, w);
-  lv_obj_set_height(l, h);
+  lv_obj_set_height(l, std::max<int>(h, lv_font_get_line_height(font)));  // the larger small fonts keep their descenders
   return l;
 }
 

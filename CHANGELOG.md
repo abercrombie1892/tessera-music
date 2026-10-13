@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.8
+- Larger small print on the dashboard: Outfit 14, 17 and 20 px are now 16, 19 and 22 px (status, next up, times, album,
+  artist, room names, list rows). The title, the clock, the icons and every place stay as they were; a line with a fixed
+  height grows to its font, so nothing is cut.
+
 ## 0.3.7
 - Grouped rooms show it: every room of a group has a frame in the group's colour, the first group in the list blue,
   the second green, then purple, pink, yellow and teal. A room on its own keeps its glass frame.
