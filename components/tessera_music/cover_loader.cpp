@@ -276,9 +276,11 @@ bool CoverLoader::decode_() {
     return false;
   }
 
-  // A square from the middle, scaled in sixteenths to at most the side we draw.
+  // A square from the middle, scaled in sixteenths to at least the side we draw: the tile trims the rest, so no
+  // background shows around the cover.
   const uint32_t crop = std::min(info.width, info.height);
-  const uint32_t steps = std::max<uint32_t>(1, std::min<uint32_t>(255, side_ * SCALE_STEPS / crop));
+  const uint32_t steps =
+      std::max<uint32_t>(1, std::min<uint32_t>(255, (side_ * SCALE_STEPS + crop - 1) / crop));
   const uint32_t out = std::max<uint32_t>(1, (crop * steps + SCALE_STEPS - 1) / SCALE_STEPS);
   Slot &slot = slots_[shown_ == 0 ? 1 : 0];
   const size_t out_bytes = align_up(out * out * 2, ALIGNMENT);

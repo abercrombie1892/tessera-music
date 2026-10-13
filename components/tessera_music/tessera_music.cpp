@@ -45,6 +45,7 @@ class NowTile : public tessera::Tile {
     lv_obj_center(note_);
     image_ = lv_image_create(art_);
     lv_obj_set_size(image_, side_, side_);
+    lv_image_set_inner_align(image_, LV_IMAGE_ALIGN_CENTER);
     lv_obj_center(image_);
     lv_obj_add_flag(image_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_style_radius(art_, ui::px(12), 0);
