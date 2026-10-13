@@ -22,6 +22,8 @@ font:
       - " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_`abcdefghijklmnopqrstuvwxyz{|}~"
       - "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ‘’“”–—−·…°"
       - '"\^•„‚‹›«»¡¿×÷©®™€£§±²³½µ´'
+      # Latin Extended-A, as far as Outfit has it: Turkish (İ ı ğ ş), Polish, Czech, Hungarian, Baltic names
+      - "ĀāĂăĄąĆćĊċČčĎďĐđĒēĖėĘęĚěĞğĠġĢģĦħĪīĮįİıĲĳĶķĹĺĻļĽľŁłŃńŅņŇňŊŋŌōŐőŒœŔŕŖŗŘřŚśŞşŠšŤťŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽž"
   - file: "gfonts://Outfit@400"
     id: tm_outfit_17
     size: 17

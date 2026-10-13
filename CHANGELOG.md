@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+- Names in Turkish, Polish, Czech, Hungarian and the Baltic languages show whole: the dashboard's fonts have the letters
+  of Latin Extended-A that Outfit draws (İ ı ğ ş, ł ą ę, č ř ž, ő ű, …), where they showed as boxes before.
+
 ## 0.3.3
 - The tile's new option Background: plain like every tile, or in the colours of the cover that plays (lighter at the
   top, darker at the foot, white words), found as the dashboard's glow finds them. Its colour follows the track.
