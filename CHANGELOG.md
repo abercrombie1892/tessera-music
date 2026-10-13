@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+- Covers show again: a picture cut to its exact square told LVGL fewer bytes than stride x height, and LVGL refused to
+  open it ("Failed to open image").
+
 ## 0.3.1
 - A library key beside the grid key opens the playlists at once (the clock moves left for it).
 - A tap on the "next up" box opens the list wherever it lands: its two tracks no longer take the tap (clickable: false,

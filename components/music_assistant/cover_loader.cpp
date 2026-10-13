@@ -363,7 +363,8 @@ bool CoverLoader::decode_() {
   h.h = side;
   h.stride = stride;
   slot.dsc.data = slot.pixels + inset * stride + inset * 2;
-  slot.dsc.data_size = stride * (side - 1) + side * 2;
+  // LVGL wants stride x height bytes from the first pixel on; the inset keeps them inside the buffer.
+  slot.dsc.data_size = stride * side;
   tone_ = mean_tone(slot.dsc.data, out, side);
   shown_ = shown_ == 0 ? 1 : 0;
   revision_++;
