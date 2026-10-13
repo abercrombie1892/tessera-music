@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <vector>
 
 namespace esphome {
 namespace music_assistant {
@@ -45,7 +46,18 @@ struct Card {
   bool cover_bound = false, highlighted = false, playing = false, dragging = false;
   int chip_state = -1;
   uint32_t last_vol_send_ms = 0;
+  uint32_t ring = 0;  // the frame in its group's colour, 0 for a room on its own
 };
+
+// One colour per group for the frame of every room in it: the first group in the list blue, the second green, …
+static constexpr uint32_t GROUP_COLORS[] = {0x5AA9F0, 0x7EE2A8, 0xB18CF0, 0xF08CC0, 0xF0D35A, 0x5AD8D0};
+static constexpr int GROUP_COLOR_COUNT = sizeof(GROUP_COLORS) / sizeof(GROUP_COLORS[0]);
+
+// What makes rooms one group: the leader's id (a member names it in synced_to), "" for a room on its own.
+static std::string group_key(const MAPlayer &p) {
+  if (!p.synced_to.empty()) return p.synced_to;
+  return p.group_members.size() > 1 ? p.player_id : std::string();
+}
 
 static MusicAssistant *s_client = nullptr;
 static Fonts F;
@@ -408,7 +420,8 @@ static void update_volume(Card &c, const MAPlayer &p) {
   set_text(c.vol_pct, pct);
 }
 
-static void update_card(int i, const MAPlayer &p, const MAPlayer *sel, const MAPlayer *lead, int cover_slot) {
+static void update_card(int i, const MAPlayer &p, const MAPlayer *sel, const MAPlayer *lead, int cover_slot,
+                        uint32_t ring) {
   Card &c = s_cards[i];
   set_text(c.name, p.display_name.c_str());
   update_chip(c, p);
@@ -431,9 +444,11 @@ static void update_card(int i, const MAPlayer &p, const MAPlayer *sel, const MAP
   // edit mode highlights the group being edited, otherwise the selection
   const bool highlight = s_edit_mode ? lead != nullptr && (&p == lead || contains(lead->group_members, p.player_id))
                                      : sel != nullptr && p.player_id == sel->player_id;
-  if (highlight == c.highlighted) return;
+  if (highlight == c.highlighted && ring == c.ring) return;
   c.highlighted = highlight;
+  c.ring = ring;
   (highlight ? style_selected : style_glass)(c.root);
+  if (ring != 0) style_border(c.root, 2, ring, LV_OPA_COVER);
 }
 
 static void update_bar(int count, const MAPlayer *sel, const MAPlayer *lead) {
@@ -458,12 +473,20 @@ void refresh() {
   const MAPlayer *sel = selected_player();
   const MAPlayer *lead = leader_of(sel);
   int next_slot = 0;
+  std::vector<std::string> groups;  // in the order their first room stands in the list
   for (int i = 0; i < G.max_cards; i++) {
     const MAPlayer *p = i < count ? s_client->player(i) : nullptr;
     set_visible(s_cards[i].root, p != nullptr);
     if (p == nullptr) continue;
     const bool has_media = !p->image_url.empty() && next_slot < COVER_SLOTS && s_dl[next_slot] != nullptr;
-    update_card(i, *p, sel, lead, has_media ? next_slot++ : -1);
+    uint32_t ring = 0;
+    const std::string key = group_key(*p);
+    if (!key.empty()) {
+      auto at = std::find(groups.begin(), groups.end(), key);
+      if (at == groups.end()) at = groups.insert(groups.end(), key);
+      ring = GROUP_COLORS[(at - groups.begin()) % GROUP_COLOR_COUNT];
+    }
+    update_card(i, *p, sel, lead, has_media ? next_slot++ : -1, ring);
   }
   update_bar(count, sel, lead);
 }

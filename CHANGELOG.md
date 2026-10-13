@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+- Grouped rooms show it: every room of a group has a frame in the group's colour, the first group in the list blue,
+  the second green, then purple, pink, yellow and teal. A room on its own keeps its glass frame.
+
 ## 0.3.6
 - The tile's cover colours show no bands: its ground is a picture of the card's size, a soft diagonal blend
   Floyd-Steinberg dithered into RGB565 as the dashboard's glow is, drawn once per track, instead of LVGL's gradient.
