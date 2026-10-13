@@ -1,0 +1,33 @@
+# Music Assistant on a Tessera screen, in the spirit of the espcontrol MA dashboard. The screen talks to Music
+# Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
+# whose rules forbid a screen's own network connections.
+id: tessera_music
+version: 0.1.0
+api: "0.8"
+icon: music
+maintainer: abercrombie1892
+license: MIT
+stage: beta
+topics: [media]
+requires:
+  esphome: 2026.6.2
+  psram: true
+boards: [wavesharep4, jc8012p4a1, jc8012p4a1v2, jc8012p4a1v3]
+flash_kb: 60
+
+inputs:
+  - { id: ma_host, kind: text, scope: all, label: ma_host, hint: ma_host_hint }
+  - { id: ma_token, kind: text, scope: all, label: ma_token, hint: ma_token_hint }
+
+tiles:
+  - id: now_playing
+    name: now_name
+    icon: music
+    sizes: { min: 2x2, max: 8x8 }
+    memory: 1400
+    example: now_example
+    options:
+      - { id: player, kind: text, label: player, hint: player_hint }
+      - { id: title, kind: choice, label: title, hint: title_hint, default: large,
+          choices: [{ value: large, label: title_large }, { value: normal, label: title_normal },
+                    { value: "off", label: title_off }] }

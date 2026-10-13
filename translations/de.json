@@ -1,0 +1,24 @@
+{
+  "_meta": { "name": "Deutsch" },
+  "screen": {
+    "connecting": "Verbinde mit Music Assistant",
+    "nothing": "Es läuft nichts"
+  },
+  "app": {
+    "name": "Music Assistant",
+    "summary": "Was in deinen Räumen läuft, mit Cover, direkt aus Music Assistant.",
+    "now_name": "Jetzt läuft",
+    "now_example": "Maison · YLLW",
+    "ma_host": "Adresse von Music Assistant",
+    "ma_host_hint": "Die IP-Adresse im Heimnetz, zum Beispiel 192.168.1.20 (Port 8095).",
+    "ma_token": "Music-Assistant-Token",
+    "ma_token_hint": "Ein langlebiger Token aus Music Assistant, Einstellungen, Profil.",
+    "player": "Raum",
+    "player_hint": "Ein Teil des Player-Namens in Music Assistant, zum Beispiel Bad. Leer: was gerade läuft.",
+    "title": "Songtitel",
+    "title_hint": "Wie groß der Titel ist, oder ausblenden.",
+    "title_large": "Groß",
+    "title_normal": "Normal",
+    "title_off": "Ausgeblendet"
+  }
+}

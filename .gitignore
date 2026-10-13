@@ -1,0 +1,5 @@
+test/.esphome/
+test/secrets.yaml
+.preview/
+test/compile.log
+__pycache__/

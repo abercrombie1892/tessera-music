@@ -1,0 +1,24 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "connecting": "Connecting to Music Assistant",
+    "nothing": "Nothing playing"
+  },
+  "app": {
+    "name": "Music Assistant",
+    "summary": "What plays in your rooms, with covers, straight from Music Assistant.",
+    "now_name": "Now playing",
+    "now_example": "Maison · YLLW",
+    "ma_host": "Music Assistant address",
+    "ma_host_hint": "Its IP address on your network, such as 192.168.1.20 (port 8095).",
+    "ma_token": "Music Assistant token",
+    "ma_token_hint": "A long-lived token from Music Assistant, Settings, Profile.",
+    "player": "Room",
+    "player_hint": "Part of the player's name in Music Assistant, such as Bath. Empty: whatever plays.",
+    "title": "Track title",
+    "title_hint": "How large the title is, or hide it.",
+    "title_large": "Large",
+    "title_normal": "Normal",
+    "title_off": "Hidden"
+  }
+}

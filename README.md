@@ -1,0 +1,29 @@
+# Music Assistant for Tessera
+
+What plays in your rooms, with covers, straight from Music Assistant: a dashboard in the spirit of the espcontrol MA
+dashboard, as a Tessera plugin for the ESP32-P4 screens (Guition 10.1-inch, Waveshare 4-inch square).
+
+**Private plugin.** The screen talks to Music Assistant itself, over a WebSocket and its image proxy on the home
+network. The rules of Tessera's plugin index forbid a screen's own network connections, so this plugin is not meant
+for the index: add it to your screens by its link.
+
+## Set up
+
+1. In Tessera, Plugins, add this repository by its link and choose your screen. The screen builds once.
+2. Fill in the address of Music Assistant (its IP address on your network) and a long-lived token from Music
+   Assistant (Settings, Profile).
+3. In Layout, place the **Now playing** tile from the library's Plugins group, at least 2 x 2.
+4. In the inspector, type part of the room's player name as Music Assistant shows it (such as `Bad`), or leave it
+   empty to follow whatever plays.
+
+## Good to know
+
+- A tap on the tile plays or pauses.
+- Music Assistant is asked often only while a tile of this plugin is on the glass.
+- Covers come from Music Assistant's image proxy and are decoded by the screen's JPEG hardware; a PNG or progressive
+  JPEG cover shows the music note instead.
+- The token is written into the screen's configuration in Home Assistant, as any value of a plugin's inputs.
+
+## Privacy
+
+Nothing leaves your home network: the screen talks only to the Music Assistant server you name.

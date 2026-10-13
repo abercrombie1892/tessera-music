@@ -1,0 +1,5 @@
+# What tools/preview.py shows. The bench has no Music Assistant, so the tile shows that it is connecting.
+tiles:
+  - tile: now_playing
+    name: Bad
+    options: { player: Bad, title: large }

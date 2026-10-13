@@ -1,0 +1,30 @@
+# Local compile test only (never flashed): Tessera's wavesharep4 package plus this plugin from the working tree.
+substitutions:
+  DEVICE_NAME: "tm-test"
+  DEVICE_FRIENDLY_NAME: "TM Test"
+  LANGUAGE: "de"
+
+esphome:
+  name: "tm-test"
+  friendly_name: "TM Test"
+
+packages:
+  display:
+    url: https://github.com/MaxGramser/homeassistant_espscreen
+    ref: main
+    files: [packages/wavesharep4.yaml]
+    refresh: 1d
+  plugin_tessera_music: !include {file: ../plugin.yaml, vars: {MA_HOST: "192.168.1.20", MA_TOKEN: "dummy"}}
+
+external_components:
+  - source: {type: local, path: ../components}
+
+api:
+  encryption:
+    key: "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="
+ota:
+  - platform: esphome
+    password: "test"
+wifi:
+  ssid: "test"
+  password: "testtesttest"

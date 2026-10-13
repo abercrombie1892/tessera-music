@@ -1,0 +1,12 @@
+# What a screen gets when it takes this plugin. MA_HOST and MA_TOKEN come from the plugin's inputs in Tessera.
+defaults:
+  MA_HOST: ""
+  MA_TOKEN: ""
+
+music_assistant:
+  id: tm_music_assistant
+  host: ${MA_HOST}
+  token: ${MA_TOKEN}
+
+tessera_music:
+  music_assistant_id: tm_music_assistant
