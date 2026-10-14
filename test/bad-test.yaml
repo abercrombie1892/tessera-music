@@ -1,6 +1,6 @@
 # Local compile test only (never flashed): Tessera's wavesharep4 package plus this plugin from the working tree.
 substitutions:
-  GITHUB_REF: "screens-v0.4.87"
+  GITHUB_REF: "screens-v0.4.88"
   DEVICE_NAME: "tm-test"
   DEVICE_FRIENDLY_NAME: "TM Test"
   LANGUAGE: "de"
@@ -12,7 +12,7 @@ esphome:
 packages:
   display:
     url: https://github.com/MaxGramser/homeassistant_espscreen
-    ref: screens-v0.4.87  # the release the screens build from
+    ref: screens-v0.4.88  # the release the screens build from
     files: [packages/wavesharep4.yaml]
     refresh: 1d
   plugin_tessera_music: !include {file: ../plugin.yaml, vars: {MA_HOST: "192.168.1.20", MA_TOKEN: "dummy", MA_ROOMS: "PC, Wohnzimmer Sonos=Wohnzimmer, Bad"}}
