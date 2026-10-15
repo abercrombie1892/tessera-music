@@ -12,7 +12,7 @@ DEPENDENCIES = ["smart_display", "music_assistant"]
 CONF_MUSIC_ASSISTANT_ID = "music_assistant_id"
 CONF_FONTS = "fonts"
 # The dashboard's fonts, as ma_dashboard.yaml had them: Outfit and the MDI icons.
-FONT_KEYS = ["text14", "text17", "text20", "text26", "text30", "text34", "icon24", "icon28", "icon34", "icon48"]
+FONT_KEYS = ["text14", "text17", "text20", "text26", "text30", "text34", "icon24", "icon28", "icon34", "icon48", "text52"]
 
 tessera_music_ns = cg.esphome_ns.namespace("tessera_music")
 TesseraMusic = tessera_music_ns.class_("TesseraMusic", cg.Component)

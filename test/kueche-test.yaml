@@ -1,0 +1,31 @@
+# Local compile test only (never flashed): Tessera's jc8012p4a1 package (10-inch kitchen) plus this plugin from the working tree.
+substitutions:
+  GITHUB_REF: "screens-v0.4.88"
+  DEVICE_NAME: "tm-test-kuche"
+  DEVICE_FRIENDLY_NAME: "TM Test"
+  LANGUAGE: "de"
+
+esphome:
+  name: "tm-test-kuche"
+  friendly_name: "TM Test"
+
+packages:
+  display:
+    url: https://github.com/MaxGramser/homeassistant_espscreen
+    ref: screens-v0.4.88  # the release the screens build from
+    files: [packages/jc8012p4a1.yaml]
+    refresh: 1d
+  plugin_tessera_music: !include {file: ../plugin.yaml, vars: {MA_HOST: "192.168.1.20", MA_TOKEN: "dummy", MA_ROOMS: "PC, Wohnzimmer Sonos=Wohnzimmer, Bad"}}
+
+external_components:
+  - source: {type: local, path: ../components}
+
+api:
+  encryption:
+    key: "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="
+ota:
+  - platform: esphome
+    password: "test"
+wifi:
+  ssid: "test"
+  password: "testtesttest"

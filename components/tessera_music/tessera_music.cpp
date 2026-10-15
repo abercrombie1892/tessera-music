@@ -367,7 +367,7 @@ bool TesseraMusic::build_dashboard_() {
   const music_assistant::ma_skeleton::Fonts fonts{
       fonts_[0]->get_lv_font(), fonts_[1]->get_lv_font(), fonts_[2]->get_lv_font(), fonts_[3]->get_lv_font(),
       fonts_[4]->get_lv_font(), fonts_[5]->get_lv_font(), fonts_[6]->get_lv_font(), fonts_[7]->get_lv_font(),
-      fonts_[8]->get_lv_font(), fonts_[9]->get_lv_font()};
+      fonts_[8]->get_lv_font(), fonts_[9]->get_lv_font(), fonts_[10]->get_lv_font()};
   const auto handles = music_assistant::ma_skeleton::build(lv_layer_top(), fonts, clock_);
   music_assistant::ma_ui::bind(
       ma_, handles, []() {},

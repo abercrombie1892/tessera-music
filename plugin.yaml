@@ -50,6 +50,14 @@ font:
     size: 34
     bpp: 4
     glyphs: *tm_outfit_glyphs
+  # The 10-inch panel's title (ma_skeleton: the 1280 x 800 layout); the 4-inch screen keeps its 34.
+  - file: "gfonts://Outfit@600"
+    id: tm_outfit_52
+    size: 52
+    bpp: 4
+    glyphs:
+      - " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_`abcdefghijklmnopqrstuvwxyz{|}~"
+      - "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿ‘’“”–—·…"
   - file: &tm_mdi
       type: web
       url: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
@@ -86,3 +94,4 @@ tessera_music:
     icon28: tm_icon_28
     icon34: tm_icon_34
     icon48: tm_icon_48
+    text52: tm_outfit_52

@@ -67,8 +67,8 @@ static lv_obj_t *picture(lv_obj_t *parent, int x, int y, int side, int radius) {
   return img;
 }
 
-static lv_obj_t *screen(lv_obj_t *dashboard, bool hidden) {
-  lv_obj_t *s = make_box(dashboard, 0, 0, 720, 720, 0);
+static lv_obj_t *screen(lv_obj_t *dashboard, int w, int h, bool hidden) {
+  lv_obj_t *s = make_box(dashboard, 0, 0, w, h, 0);
   lv_obj_remove_flag(s, LV_OBJ_FLAG_CLICKABLE);
   if (hidden) lv_obj_add_flag(s, LV_OBJ_FLAG_HIDDEN);
   return s;
@@ -180,26 +180,115 @@ static void build_controls(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   lv_label_set_text(h.vol_pct, "—");
 }
 
-ma_ui::Handles build(lv_obj_t *parent, const Fonts &f, lv_obj_t *clock) {
-  ma_ui::Handles h{};
-  h.dashboard = obj(parent, 0, 0, 720, 720, 0, COL_BG, LV_OPA_COVER, false);
-  lv_obj_add_flag(h.dashboard, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_add_flag(h.dashboard, LV_OBJ_FLAG_HIDDEN);
-  h.glow_img = lv_image_create(h.dashboard);
-  lv_obj_set_pos(h.glow_img, 0, 0);
-  lv_obj_set_size(h.glow_img, 720, 720);
-  lv_obj_add_flag(h.glow_img, LV_OBJ_FLAG_HIDDEN);
+// ---- The 10-inch panel (1280 x 800), as the espcontrol JC8012P4A1 device drew it (its lvgl.yaml)
 
-  h.screen1 = screen(h.dashboard, false);
-  build_topbar(h.screen1, f, h);
-  build_now(h.screen1, f, h);
-  build_next_up(h.screen1, f, h);
-  build_controls(h.screen1, f, h);
-  h.screen2 = screen(h.dashboard, true);
-  h.screen3 = screen(h.dashboard, true);
+static void build_panel_topbar(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
+  h.back_btn = glass(s, 48, 24, 56, 56);
+  icon(h.back_btn, f.icon34, GLYPH_BACK, COL_TEXT);
+  lv_obj_t *kicker = make_label(s, f.text14, COL_MUTED, 118, 24);
+  lv_obj_set_style_text_letter_space(kicker, 2, 0);
+  lv_label_set_text(kicker, "MUSIC ASSISTANT");
+  lv_obj_t *subtitle = make_label(s, f.text20, COL_TEXT, 118, 48);
+  lv_label_set_text(subtitle, "Jetzt läuft");
 
-  h.clock_src = clock;
-  h.title_font_small = f.text26;
+  h.player_pill = glass(s, 480, 24, 320, 56, OPA_8);
+  lv_obj_t *dot = obj(h.player_pill, 8, 8, 40, 40, 20, COL_ACCENT, LV_OPA_COVER, false);
+  icon(dot, f.icon24, GLYPH_SPEAKER, COL_ON_ACCENT);
+  h.player_name = make_label(h.player_pill, f.text26, COL_TEXT, 0, 0, 170);
+  lv_obj_align(h.player_name, LV_ALIGN_LEFT_MID, 60, 0);
+  lv_label_set_text(h.player_name, "…");
+  h.group_badge = obj(h.player_pill, 236, 14, 34, 28, 14, COL_TEXT, LV_OPA_COVER, false);
+  lv_obj_add_flag(h.group_badge, LV_OBJ_FLAG_HIDDEN);
+  h.group_badge_lbl = icon(h.group_badge, f.text14, "+2", COL_ON_ACCENT);
+  lv_obj_t *chevron = make_label(h.player_pill, f.icon24, COL_MUTED, 0, 0);
+  lv_label_set_text(chevron, GLYPH_DOWN);
+  lv_obj_align(chevron, LV_ALIGN_LEFT_MID, 282, 0);
+
+  h.clock_lbl = make_label(s, f.text30, COL_TEXT, 900, 32, 192);
+  lv_obj_set_style_text_align(h.clock_lbl, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_label_set_text(h.clock_lbl, "--:--");
+  h.library_btn = glass(s, 1108, 24, 56, 56);
+  icon(h.library_btn, f.icon28, GLYPH_LIBRARY, COL_TEXT);
+  h.grid_btn = glass(s, 1176, 24, 56, 56);
+  icon(h.grid_btn, f.icon28, GLYPH_GRID, COL_TEXT);
+}
+
+// Cover (480 px, left); right: status, title, artist, album, the bar, the transport row, the volume pill
+static void build_panel_now(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
+  h.cover_ph = obj(s, 48, 104, 480, 480, 32, WHITE, OPA_7, true);
+  icon(h.cover_ph, f.icon48, GLYPH_MUSIC, COL_MUTED);
+  h.cover_img = picture(s, 48, 104, 480, 32);
+
+  h.status_dot = obj(s, 584, 112, 10, 10, 5, COL_PLAYING, LV_OPA_COVER, false);
+  h.status_lbl = line(s, f.text14, COL_MUTED, 602, 104, 400, 20);
+  lv_obj_set_style_text_letter_space(h.status_lbl, 2, 0);
+  lv_label_set_text(h.status_lbl, "SPIELT");
+  h.fav_btn = glass(s, 1176, 96, 56, 56);
+  h.fav_icon = icon(h.fav_btn, f.icon28, GLYPH_HEART_OUTLINE, COL_GRAY);
+
+  h.title = line(s, f.text52, COL_TEXT, 584, 132, 580, 66);
+  lv_label_set_text(h.title, "—");
+  h.artist = line(s, f.text26, COL_TEXT2, 584, 206, 648, 32);
+  h.album = line(s, f.text17, COL_DIM, 584, 246, 648, 26);
+
+  h.progress = lv_slider_create(s);
+  lv_obj_set_pos(h.progress, 584, 300);
+  lv_obj_set_size(h.progress, 648, 24);
+  h.time_cur = make_label(s, f.text17, COL_DIM, 584, 336);
+  lv_label_set_text(h.time_cur, "0:00");
+  h.time_rem = make_label(s, f.text17, COL_DIM, 584, 336, 648);
+  lv_obj_set_style_text_align(h.time_rem, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_label_set_text(h.time_rem, "−0:00");
+
+  h.shuffle_btn = make_box(s, 584, 404, 64, 64, 32);
+  lv_obj_add_flag(h.shuffle_btn, LV_OBJ_FLAG_CLICKABLE);
+  h.shuffle_icon = icon(h.shuffle_btn, f.icon28, GLYPH_SHUFFLE, COL_MUTED);
+  h.prev_btn = glass(s, 702, 392, 88, 88);
+  icon(h.prev_btn, f.icon34, GLYPH_PREV, COL_TEXT);
+  h.play_btn = obj(s, 844, 372, 128, 128, 64, COL_ACCENT, LV_OPA_COVER, false);
+  lv_obj_add_flag(h.play_btn, LV_OBJ_FLAG_CLICKABLE);
+  h.play_icon = icon(h.play_btn, f.icon48, GLYPH_PLAY, COL_ON_ACCENT);
+  h.next_btn = glass(s, 1026, 392, 88, 88);
+  icon(h.next_btn, f.icon34, GLYPH_NEXT, COL_TEXT);
+  h.repeat_btn = make_box(s, 1168, 404, 64, 64, 32);
+  lv_obj_add_flag(h.repeat_btn, LV_OBJ_FLAG_CLICKABLE);
+  h.repeat_icon = icon(h.repeat_btn, f.icon28, GLYPH_REPEAT_OFF, COL_MUTED);
+
+  lv_obj_t *pill = obj(s, 584, 512, 648, 72, 36, WHITE, OPA_7, true);
+  h.mute_btn = obj(pill, 14, 14, 44, 44, 22, WHITE, OPA_8, false);
+  lv_obj_add_flag(h.mute_btn, LV_OBJ_FLAG_CLICKABLE);
+  h.mute_icon = icon(h.mute_btn, f.icon28, GLYPH_VOL_HIGH, COL_TEXT);
+  h.vol = lv_slider_create(pill);
+  lv_obj_set_pos(h.vol, 74, 26);
+  lv_obj_set_size(h.vol, 444, 20);
+  h.vol_pct = make_label(pill, f.text20, COL_TEXT, 0, 0, 90);
+  lv_obj_set_style_text_align(h.vol_pct, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_obj_align(h.vol_pct, LV_ALIGN_RIGHT_MID, -22, 0);
+  lv_label_set_text(h.vol_pct, "—");
+}
+
+// Als Nächstes: four tiles in a row and the list key at the end
+static void build_panel_next_up(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
+  lv_obj_t *head = make_label(s, f.text14, COL_MUTED, 48, 640, 140);
+  lv_obj_set_style_text_letter_space(head, 2, 0);
+  lv_label_set_text(head, "ALS NÄCHSTES");
+  h.next_count = make_label(s, f.text14, COL_GRAY, 48, 668, 140);
+  lv_label_set_long_mode(h.next_count, LV_LABEL_LONG_WRAP);
+  for (int i = 0; i < 4; i++) {
+    h.tiles[i] = obj(s, 196 + i * 235, 632, 223, 96, 22, WHITE, OPA_7, true);
+    lv_obj_add_flag(h.tiles[i], LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_bg_opa(h.tiles[i], OPA_17, LV_STATE_PRESSED);
+    h.tile_img[i] = picture(h.tiles[i], 12, 12, 72, 14);
+    h.tile_title[i] = line(h.tiles[i], f.text17, COL_TEXT, 96, 14, 115, 26);
+    h.tile_artist[i] = line(h.tiles[i], f.text14, COL_DIM, 96, 52, 115, 22);
+  }
+  h.queue_btn = obj(s, 1136, 632, 96, 96, 22, WHITE, OPA_7, true);
+  lv_obj_add_flag(h.queue_btn, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_set_style_bg_opa(h.queue_btn, OPA_17, LV_STATE_PRESSED);
+  icon(h.queue_btn, f.icon34, GLYPH_LIBRARY, COL_TEXT);
+}
+
+static void share_fonts(const Fonts &f, ma_ui::Handles &h) {
   h.fonts.text14 = f.text14;
   h.fonts.text17 = f.text17;
   h.fonts.text20 = f.text20;
@@ -208,14 +297,48 @@ ma_ui::Handles build(lv_obj_t *parent, const Fonts &f, lv_obj_t *clock) {
   h.fonts.icon24 = f.icon24;
   h.fonts.icon28 = f.icon28;
   h.fonts.icon34 = f.icon34;
+}
 
-  // The cover pipeline of ma_dashboard.yaml: 1 cover (320), 2 next-up tiles (44), 4 room covers (48), 4 queue
-  // thumbnails (44).
-  h.cover_dl = new artwork_image::ArtworkImage(320);
+ma_ui::Handles build(lv_obj_t *parent, const Fonts &f, lv_obj_t *clock) {
+  ma_ui::Handles h{};
+  lv_display_t *display = lv_obj_get_display(parent);
+  const bool panel = lv_display_get_horizontal_resolution(display) >= 1280 &&
+                     lv_display_get_vertical_resolution(display) >= 800 && f.text52 != nullptr;
+  const int w = panel ? 1280 : 720, ht = panel ? 800 : 720;
+  h.dashboard = obj(parent, 0, 0, w, ht, 0, COL_BG, LV_OPA_COVER, false);
+  lv_obj_add_flag(h.dashboard, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_flag(h.dashboard, LV_OBJ_FLAG_HIDDEN);
+  h.glow_img = lv_image_create(h.dashboard);
+  lv_obj_set_pos(h.glow_img, 0, 0);
+  lv_obj_set_size(h.glow_img, w, ht);
+  lv_obj_add_flag(h.glow_img, LV_OBJ_FLAG_HIDDEN);
+
+  h.screen1 = screen(h.dashboard, w, ht, false);
+  if (panel) {
+    build_panel_topbar(h.screen1, f, h);
+    build_panel_now(h.screen1, f, h);
+    build_panel_next_up(h.screen1, f, h);
+  } else {
+    build_topbar(h.screen1, f, h);
+    build_now(h.screen1, f, h);
+    build_next_up(h.screen1, f, h);
+    build_controls(h.screen1, f, h);
+  }
+  h.screen2 = screen(h.dashboard, w, ht, true);
+  h.screen3 = screen(h.dashboard, w, ht, true);
+
+  h.clock_src = clock;
+  h.title_font_small = panel ? f.text34 : f.text26;
+  share_fonts(f, h);
+
+  // The covers: the big one, the next-up tiles, the room cards and the queue's thumbnails, at the sizes each layout
+  // draws them (the panel's from its device.yaml, the 4-inch's from ma_dashboard.yaml).
+  h.cover_dl = new artwork_image::ArtworkImage(panel ? 480 : 320);
   for (auto &dl : h.tile_dl) dl = nullptr;
-  for (int i = 0; i < 2; i++) h.tile_dl[i] = new artwork_image::ArtworkImage(44);
-  for (auto &dl : h.card_dl) dl = new artwork_image::ArtworkImage(48);
-  for (int i = 0; i < ma_queue::THUMB_SLOTS; i++) h.row_dl[i] = i < 4 ? new artwork_image::ArtworkImage(44) : nullptr;
+  for (int i = 0; i < (panel ? 4 : 2); i++) h.tile_dl[i] = new artwork_image::ArtworkImage(panel ? 72 : 44);
+  for (auto &dl : h.card_dl) dl = new artwork_image::ArtworkImage(panel ? 56 : 48);
+  for (int i = 0; i < ma_queue::THUMB_SLOTS; i++)
+    h.row_dl[i] = panel || i < 4 ? new artwork_image::ArtworkImage(panel ? 52 : 44) : nullptr;
   return h;
 }
 

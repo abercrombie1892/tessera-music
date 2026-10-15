@@ -14,7 +14,7 @@ namespace esphome::tessera_music {
 // A tap on the Now playing tile opens the espcontrol MA dashboard over the whole glass.
 class TesseraMusic : public Component, public tessera::Plugin {
  public:
-  static constexpr int FONTS = 10;
+  static constexpr int FONTS = 11;
 
   void setup() override;
   void loop() override;

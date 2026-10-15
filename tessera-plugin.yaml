@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.4.0
+version: 0.4.1
 api: "0.8"
 icon: music
 maintainer: abercrombie1892
@@ -13,7 +13,7 @@ requires:
   esphome: 2026.6.2
   psram: true
 boards: [wavesharep4, jc8012p4a1, jc8012p4a1v2, jc8012p4a1v3]
-flash_kb: 400
+flash_kb: 500
 
 inputs:
   - { id: ma_host, kind: text, scope: all, label: ma_host, hint: ma_host_hint }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+- The dashboard on the 10-inch Guition panel (1280 x 800): the espcontrol panel's own layout, a 480 px cover, the title
+  at 52 px, four next-up tiles in a row, the rooms as cards and the queue beside the cover. The 4-inch screen keeps its
+  720 x 720 layout.
+
 ## 0.4.0
 - Keys on the tile: previous, play or pause, next, round under the words (light on a cover-coloured ground). The new
   option Keys hides them.
