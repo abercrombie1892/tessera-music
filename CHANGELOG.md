@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+- 10-inch dashboard: the player pill starts with the right column instead of over the cover.
+- Queue and library tabs as wide as their words: "Warteschlange" no longer runs over its tab.
+- The waveform is asked for again every 30 s (up to six times) while Music Assistant has no analysis of the track yet.
+
 ## 0.4.1
 - The dashboard on the 10-inch Guition panel (1280 x 800): the espcontrol panel's own layout, a 480 px cover, the title
   at 52 px, four next-up tiles in a row, the rooms as cards and the queue beside the cover. The 4-inch screen keeps its

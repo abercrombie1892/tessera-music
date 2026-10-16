@@ -191,7 +191,7 @@ static void build_panel_topbar(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   lv_obj_t *subtitle = make_label(s, f.text20, COL_TEXT, 118, 48);
   lv_label_set_text(subtitle, "Jetzt läuft");
 
-  h.player_pill = glass(s, 480, 24, 320, 56, OPA_8);
+  h.player_pill = glass(s, 584, 24, 320, 56, OPA_8);
   lv_obj_t *dot = obj(h.player_pill, 8, 8, 40, 40, 20, COL_ACCENT, LV_OPA_COVER, false);
   icon(dot, f.icon24, GLYPH_SPEAKER, COL_ON_ACCENT);
   h.player_name = make_label(h.player_pill, f.text26, COL_TEXT, 0, 0, 170);
@@ -204,7 +204,7 @@ static void build_panel_topbar(lv_obj_t *s, const Fonts &f, ma_ui::Handles &h) {
   lv_label_set_text(chevron, GLYPH_DOWN);
   lv_obj_align(chevron, LV_ALIGN_LEFT_MID, 282, 0);
 
-  h.clock_lbl = make_label(s, f.text30, COL_TEXT, 900, 32, 192);
+  h.clock_lbl = make_label(s, f.text30, COL_TEXT, 916, 32, 176);
   lv_obj_set_style_text_align(h.clock_lbl, LV_TEXT_ALIGN_RIGHT, 0);
   lv_label_set_text(h.clock_lbl, "--:--");
   h.library_btn = glass(s, 1108, 24, 56, 56);

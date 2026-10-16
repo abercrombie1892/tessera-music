@@ -1130,10 +1130,18 @@ void MusicAssistant::parse_favorite_(JsonObjectConst item) {
     now_playing_.media_type = item["media_type"] | "track";
     // waveform once per track: audio_analysis/wave_form wants the source
     // provider's id (verified: the library id answers None)
-    if (waveform_uri_ != now_playing_.uri) {
-        waveform_uri_ = now_playing_.uri;
-        now_playing_.waveform.clear();
-        revision_++;
+    const bool new_track = waveform_uri_ != now_playing_.uri;
+    const bool ask_again = !new_track && now_playing_.waveform.empty() && waveform_asks_ < WAVEFORM_MAX_ASKS &&
+                           millis() - waveform_asked_ms_ >= WAVEFORM_RETRY_MS;
+    if (new_track || ask_again) {
+        if (new_track) {
+            waveform_uri_ = now_playing_.uri;
+            waveform_asks_ = 0;
+            now_playing_.waveform.clear();
+            revision_++;
+        }
+        waveform_asks_++;
+        waveform_asked_ms_ = millis();
         JsonObjectConst map = item["provider_mappings"][0].as<JsonObjectConst>();
         const std::string id = map["item_id"] | "", prov = map["provider_instance"] | "";
         if (!id.empty() && !prov.empty())

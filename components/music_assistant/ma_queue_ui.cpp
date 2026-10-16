@@ -25,16 +25,16 @@ struct Geometry {
   bool compact;
   int list_x, list_y, list_w, list_h, row_h, row_step, thumb;
   int thumb_x, text_x, text_w;
-  int seg_x, seg_y, seg_w, seg_h, tab_w;
+  int seg_x, seg_y, seg_w, seg_h;
   int back_x, back_y, back_size, title_x, title_w, clock_x;
 };
 static constexpr Geometry PANEL{false, 440, 104, 792, 664, 72, 78, 52,
                                 66, 134, 540,
-                                440, 24, 590, 56, 144,
+                                440, 24, 600, 56,
                                 COL_X, 24, 56, 118, 290, 1056};
 static constexpr Geometry COMPACT{true, 20, 156, 680, 548, 64, 70, 44,
                                   54, 112, 470,
-                                  20, 88, 680, 52, 167,
+                                  20, 88, 680, 52,
                                   20, 20, 52, 86, 380, 500};
 static Geometry G = PANEL;
 // queue: up to MAX_QUEUE_ROWS; library lists: two pages (rows live in PSRAM)
@@ -190,9 +190,19 @@ static void build_topbar(lv_obj_t *screen) {
   lv_obj_t *seg = make_box(screen, G.seg_x, G.seg_y, G.seg_w, G.seg_h, G.seg_h / 2);
   style_glass(seg);
   lv_obj_remove_flag(seg, LV_OBJ_FLAG_CLICKABLE);
+  // Each tab as wide as its word, the rest of the pill shared out evenly: the plugin's Outfit is larger than the
+  // YAML's, and "Warteschlange" ran over a quarter of the pill.
   const int tab_h = G.seg_h - 12;
+  int word_w[4], words = 0;
   for (int i = 0; i < 4; i++) {
-    s_tabs[i] = make_box(seg, 6 + i * G.tab_w, 6, G.tab_w, tab_h, tab_h / 2);
+    lv_point_t size;
+    lv_text_get_size(&size, TABS[i], F.text17, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+    word_w[i] = size.x;
+    words += size.x;
+  }
+  const int spare = std::max(0, G.seg_w - 12 - words) / 4;
+  for (int i = 0, x = 6; i < 4; x += word_w[i] + spare, i++) {
+    s_tabs[i] = make_box(seg, x, 6, word_w[i] + spare, tab_h, tab_h / 2);
     style_fill(s_tabs[i], COL_TEXT, LV_OPA_TRANSP);
     add_press_feedback(s_tabs[i], 26);
     s_tab_lbl[i] = make_icon(s_tabs[i], F.text17, TABS[i], COL_MUTED);

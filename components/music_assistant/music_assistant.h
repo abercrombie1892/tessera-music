@@ -281,6 +281,10 @@ class MusicAssistant : public Component {
     uint32_t selected_seen_playing_ms_ = 0;
     static constexpr uint32_t SELECTION_HOLD_MS = 15000;  // buffering on seek must not steal focus
     std::string waveform_uri_;            // track whose waveform was requested
+    uint32_t waveform_asked_ms_ = 0;      // MA analyses a track while it plays: ask again while it has none
+    int waveform_asks_ = 0;
+    static constexpr uint32_t WAVEFORM_RETRY_MS = 30000;
+    static constexpr int WAVEFORM_MAX_ASKS = 6;
     static constexpr uint32_t PLAYER_POLL_MS = 1000;  // one players/get per second while open
     int poll_tick_ = 0;
     int round_robin_ = 0;
