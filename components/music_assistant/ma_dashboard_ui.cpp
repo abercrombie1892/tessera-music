@@ -624,8 +624,7 @@ static void update_static_() {
   set_bg_opa(H.play_btn, LV_OPA_COVER);
 
   // status line + dot
-  std::string where = p != nullptr ? p->display_name : "";
-  for (char &c : where) c = toupper(c);
+  const std::string where = widgets::to_upper(p != nullptr ? p->display_name : "");
   set_lbl(H.status_lbl, playing ? ("SPIELT IN " + where).c_str()
                                 : (paused ? ("PAUSIERT IN " + where).c_str() : "BEREIT"));
   set_bg_color(H.status_dot, playing ? COL_PLAYING : COL_GRAY);

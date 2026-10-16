@@ -344,13 +344,11 @@ static void update_now_playing() {
     // no now-playing column: kicker = list, subtitle = room
     std::string kicker = TABS[s_tab];
     if (s_tab == 0) kicker += " · " + to_string((int) s_client->queue_total_items()) + " Titel";
-    for (char &c : kicker) c = (char) toupper((unsigned char) c);
-    set_text(s_kicker, kicker.c_str());
+    set_text(s_kicker, to_upper(kicker).c_str());
     set_text(s_subtitle, room.c_str());
     return;
   }
-  for (char &c : room) c = (char) toupper((unsigned char) c);
-  set_text(s_kicker, room.c_str());
+  set_text(s_kicker, to_upper(room).c_str());
   set_text(s_title, np.title.empty() ? "Nichts läuft" : np.title.c_str());
   set_text(s_artist, np.artist.c_str());
   set_text(s_play_icon, p != nullptr && p->playback_state == "playing" ? GLYPH_PAUSE : GLYPH_PLAY);

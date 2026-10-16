@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.3
+- Room names in upper case keep their umlauts: "SPIELT IN KÜCHE" instead of "KüCHE".
+
 ## 0.4.2
 - 10-inch dashboard: the player pill starts with the right column instead of over the cover.
 - Queue and library tabs as wide as their words: "Warteschlange" no longer runs over its tab.

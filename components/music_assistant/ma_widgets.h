@@ -6,6 +6,7 @@
 #include "esphome/components/music_assistant/ma_artwork.h"
 
 #include <cstdint>
+#include <string>
 
 namespace esphome {
 namespace music_assistant {
@@ -28,6 +29,9 @@ void style_glass(lv_obj_t *obj);
 void style_selected(lv_obj_t *obj);
 void add_press_feedback(lv_obj_t *obj, uint8_t pressed_opa);
 void style_slider(lv_obj_t *s);
+
+// Upper case for the kicker lines, umlauts included: toupper() only knows ASCII and left "KüCHE".
+std::string to_upper(std::string text);
 
 // Paces every MA image request (all screens share it): true = the caller may
 // start one download now. Each download + HW decode competes with the

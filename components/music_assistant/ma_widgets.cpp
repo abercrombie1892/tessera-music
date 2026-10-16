@@ -13,6 +13,21 @@ using namespace theme;
 
 static constexpr uint32_t DOWNLOAD_GAP_MS = 600;
 
+std::string to_upper(std::string text) {
+  for (size_t i = 0; i < text.size(); i++) {
+    const auto c = (unsigned char) text[i];
+    if (c >= 'a' && c <= 'z') {
+      text[i] = (char) (c - 0x20);
+    } else if (c == 0xC3 && i + 1 < text.size()) {
+      // Latin-1 lower case à..þ is U+00E0..U+00FE, its upper case 0x20 below; ÷ (U+00F7) has none.
+      const auto next = (unsigned char) text[i + 1];
+      if (next >= 0xA0 && next <= 0xBE && next != 0xB7) text[i + 1] = (char) (next - 0x20);
+      i++;
+    }
+  }
+  return text;
+}
+
 bool download_slot() {
   static uint32_t last_ms = 0;
   static bool started = false;
