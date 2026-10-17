@@ -37,9 +37,49 @@ bool download_slot() {
   return true;
 }
 
+std::string printable(const char *text, const lv_font_t *font) {
+  bool plain = true;
+  for (const char *p = text; *p; p++)
+    if ((unsigned char) *p >= 0x80) {
+      plain = false;
+      break;
+    }
+  if (plain || font == nullptr) return text;
+  std::string out;
+  bool gap = false;
+  const auto *p = reinterpret_cast<const unsigned char *>(text);
+  while (*p) {
+    uint32_t cp;
+    int n;
+    if (*p < 0x80) {
+      cp = *p, n = 1;
+    } else if ((*p & 0xE0) == 0xC0 && p[1]) {
+      cp = ((*p & 0x1F) << 6) | (p[1] & 0x3F), n = 2;
+    } else if ((*p & 0xF0) == 0xE0 && p[1] && p[2]) {
+      cp = ((*p & 0x0F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F), n = 3;
+    } else if ((*p & 0xF8) == 0xF0 && p[1] && p[2] && p[3]) {
+      cp = ((*p & 0x07) << 18) | ((p[1] & 0x3F) << 12) | ((p[2] & 0x3F) << 6) | (p[3] & 0x3F), n = 4;
+    } else {
+      p++;
+      continue;
+    }
+    lv_font_glyph_dsc_t dsc;
+    if (cp < 0x80 || lv_font_get_glyph_dsc(font, &dsc, cp, 0)) {
+      out.append(reinterpret_cast<const char *>(p), n);
+      gap = false;
+    } else if (!gap) {
+      out += '?';
+      gap = true;
+    }
+    p += n;
+  }
+  return out;
+}
+
 void set_text(lv_obj_t *lbl, const char *text) {
+  const std::string clean = printable(text, lv_obj_get_style_text_font(lbl, LV_PART_MAIN));
   const char *cur = lv_label_get_text(lbl);
-  if (cur == nullptr || strcmp(cur, text) != 0) lv_label_set_text(lbl, text);
+  if (cur == nullptr || strcmp(cur, clean.c_str()) != 0) lv_label_set_text(lbl, clean.c_str());
 }
 
 void set_visible(lv_obj_t *obj, bool visible) {

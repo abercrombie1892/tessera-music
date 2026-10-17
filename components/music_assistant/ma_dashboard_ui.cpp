@@ -38,8 +38,9 @@ static bool s_bound = false;
 // change-detected label cache: set text only when it really changes
 static void set_lbl(lv_obj_t *lbl, const char *text) {
   if (lbl == nullptr) return;
+  const std::string clean = widgets::printable(text, lv_obj_get_style_text_font(lbl, LV_PART_MAIN));
   const char *cur = lv_label_get_text(lbl);
-  if (cur == nullptr || strcmp(cur, text) != 0) lv_label_set_text(lbl, text);
+  if (cur == nullptr || strcmp(cur, clean.c_str()) != 0) lv_label_set_text(lbl, clean.c_str());
 }
 
 // Title stays on one line and is never clipped: the YAML font (52 px) when it

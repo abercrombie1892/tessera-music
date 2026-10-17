@@ -18,6 +18,8 @@ struct Fonts {
 };
 
 void set_text(lv_obj_t *lbl, const char *text);  // no-op when unchanged
+// The text with every character the font has no glyph for (it would draw as a box) swapped, run by run, for one "?".
+std::string printable(const char *text, const lv_font_t *font);
 void set_visible(lv_obj_t *obj, bool visible);
 // width > 0: single line of that width, cut with "…"
 lv_obj_t *make_label(lv_obj_t *parent, const lv_font_t *font, uint32_t color, int x, int y, int width = 0);

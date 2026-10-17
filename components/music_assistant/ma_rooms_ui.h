@@ -16,7 +16,7 @@ namespace music_assistant {
 namespace ma_rooms {
 
 static constexpr int MAX_CARDS = 9;    // 3x3 grid
-static constexpr int COVER_SLOTS = 4;  // cover downloaders, shared by the cards that have media
+static constexpr int COVER_SLOTS = 8;  // cover downloaders, shared by the cards that have media
 
 using Fonts = widgets::Fonts;
 

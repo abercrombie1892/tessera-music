@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.9
+- The rooms screen loads the cover of up to eight rooms (it was four): Schlafzimmer and Emmi, the fifth and sixth with a
+  cover, showed the music note.
+- A character the font has no glyph for (Cyrillic, Japanese, emoji) shows as one "?" per run instead of a row of
+  boxes, on every screen and on the tile.
+
 ## 0.4.8
 - The Scene / Light tile of 0.4.7 is a plugin of its own now, `tessera_scenes` (github.com/abercrombie1892/tessera-scenes):
   this plugin is Music Assistant only again.

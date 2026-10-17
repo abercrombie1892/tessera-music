@@ -100,6 +100,27 @@ static void paint_blur(uint16_t *pixels, int w, int h, const lv_image_dsc_t *cov
   });
 }
 
+// The text with every character the font has no glyph for (it would draw as a box) swapped, run by run, for one "?".
+static std::string printable(const std::string &text, Font font) {
+  if (std::all_of(text.begin(), text.end(), [](unsigned char c) { return c < 0x80; })) return text;
+  std::string out;
+  bool gap = false;
+  for (size_t i = 0; i < text.size();) {
+    const unsigned char c = text[i];
+    const size_t n = c < 0x80 ? 1 : (c & 0xE0) == 0xC0 ? 2 : (c & 0xF0) == 0xE0 ? 3 : (c & 0xF8) == 0xF0 ? 4 : 1;
+    const std::string one = text.substr(i, n);
+    i += n;
+    if (n == 1 || ui::covers(one, font)) {
+      out += one;
+      gap = false;
+    } else if (!gap) {
+      out += '?';
+      gap = true;
+    }
+  }
+  return out;
+}
+
 static void text_color(lv_obj_t *label, uint32_t color) {
   if (!lv_color_eq(lv_obj_get_style_text_color(label, LV_PART_MAIN), lv_color_hex(color)))
     lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
@@ -214,8 +235,8 @@ class NowTile : public tessera::Tile {
     const auto &now = ma->now_playing();
     const auto *player = ma->player(ma->selected_player());
     const bool playing = player != nullptr && player->playback_state == "playing";
-    ui::set_text(title_, now.title.empty() ? (player ? player->display_name : plugin_->text("nothing")) : now.title);
-    ui::set_text(artist_, now.artist);
+    ui::set_text(title_, now.title.empty() ? (player ? player->display_name : plugin_->text("nothing")) : printable(now.title, title_font_));
+    ui::set_text(artist_, printable(now.artist, Font::BODY_LARGE));
     const uint32_t elapsed = (uint32_t) ma->elapsed_now();
     const uint32_t duration = now.duration_s;
     ui::set_text(elapsed_, duration ? clock_of(std::min(elapsed, duration)) : "");
