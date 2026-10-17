@@ -1,6 +1,5 @@
 #include "tessera_music.h"
 #include "ground.h"
-#include "scene_tile.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -716,7 +715,6 @@ class DashboardCard : public tessera::Card {
 
 void TesseraMusic::setup() {
   add_tile("now_playing", [this]() { return new NowTile(this); });
-  add_tile("scene", [this]() { return make_scene_tile(this); });
   add_card("player", [this]() { return new DashboardCard(this); }, true);
 }
 

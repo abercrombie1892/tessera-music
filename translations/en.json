@@ -4,9 +4,7 @@
   },
   "screen": {
     "connecting": "Connecting to Music Assistant",
-    "nothing": "Nothing playing",
-    "on": "On",
-    "off": "Off"
+    "nothing": "Nothing playing"
   },
   "app": {
     "name": "Music Assistant",
@@ -39,10 +37,6 @@
     "keys_show": "Show",
     "keys_hide": "Hide",
     "bar": "Bar",
-    "bar_hint": "Queue, room and volume under the keys. The room pill opens the rooms, the left key the queue, the right one a volume slider. Left out on small tiles.",
-    "scene_name": "Scene / Light",
-    "scene_example": "Miami",
-    "colors": "Own colours",
-    "colors_hint": "Empty: the colours of the scene (from the Hue bridge) or of the light. Otherwise up to three colours as #RRGGBB, separated by commas: #3848FE, #FE6EBC."
+    "bar_hint": "Queue, room and volume under the keys. The room pill opens the rooms, the left key the queue, the right one a volume slider. Left out on small tiles."
   }
 }

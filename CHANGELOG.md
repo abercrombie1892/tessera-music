@@ -1,10 +1,8 @@
 # Changelog
 
-## 0.4.7
-- New tile "Scene / Light": a scene or a light on a gradient of its own colours, the name in white on it. The colours
-  of the Hue scenes come from the bridge (up to three, kept in the plugin by entity id); a light takes its own colour,
-  one that is off is dimmed, any other scene gets two hues from its name. Option "Own colours" (#RRGGBB, up to three)
-  overrides them. A tap starts the scene or switches the light.
+## 0.4.8
+- The Scene / Light tile of 0.4.7 is a plugin of its own now, `tessera_scenes` (github.com/abercrombie1892/tessera-scenes):
+  this plugin is Music Assistant only again.
 
 ## 0.4.6
 - The wave on the tile is as high as the tile allows (a sixth of it at most, 40 px at most): a small tile no longer
