@@ -27,15 +27,18 @@ struct Geometry {
   int thumb_x, text_x, text_w;
   int seg_x, seg_y, seg_w, seg_h;
   int back_x, back_y, back_size, title_x, title_w, clock_x;
+  int scrub_x, scrub_w;  // the strip right of the list that slides through it
 };
-static constexpr Geometry PANEL{false, 440, 104, 792, 664, 72, 78, 52,
-                                66, 134, 540,
+static constexpr Geometry PANEL{false, 440, 104, 760, 664, 72, 78, 52,
+                                66, 134, 510,
                                 440, 24, 600, 56,
-                                COL_X, 24, 56, 118, 290, 1056};
-static constexpr Geometry COMPACT{true, 20, 156, 680, 548, 64, 70, 44,
-                                  54, 112, 470,
+                                COL_X, 24, 56, 118, 290, 1056,
+                                1212, 48};
+static constexpr Geometry COMPACT{true, 20, 156, 632, 548, 64, 70, 44,
+                                  54, 112, 420,
                                   20, 88, 680, 52,
-                                  20, 20, 52, 86, 380, 500};
+                                  20, 20, 52, 86, 380, 500,
+                                  662, 44};
 static Geometry G = PANEL;
 // queue: up to MAX_QUEUE_ROWS; library lists: two pages (rows live in PSRAM)
 static constexpr int MAX_ROWS = 2 * MusicAssistant::LIBRARY_PAGE;
@@ -82,6 +85,7 @@ static uint32_t s_fetch_ms[THUMB_SLOTS] = {};
 static Row s_rows[MAX_ROWS];
 static int s_rows_built = 0;
 static lv_obj_t *s_list = nullptr, *s_more = nullptr, *s_more_lbl = nullptr;
+static lv_obj_t *s_scrub = nullptr, *s_scrub_thumb = nullptr, *s_bubble = nullptr, *s_bubble_lbl = nullptr;
 static lv_obj_t *s_kicker = nullptr, *s_clock = nullptr, *s_subtitle = nullptr;
 static lv_obj_t *s_tabs[4] = {}, *s_tab_lbl[4] = {};
 static int s_tab = 0;  // 0 = queue, 1..3 = library lists
@@ -171,6 +175,106 @@ static void on_tab(lv_event_t *e) {
 static void on_scroll_end(lv_event_t *) {
   kick_thumbs(THUMB_SETTLE_MS);
   refresh();
+}
+
+// ── scrub strip ─────────────────────────────────────────────────────────────
+// A finger on the strip right of the list slides through it: the list follows the finger at once, a bubble beside it
+// says where (the first letter of the row, its number in the queue), and the bottom of the strip loads the next page.
+
+static int list_rows();
+static constexpr int BUBBLE = 88, LINE_W = 3, GRIP_W = 5, GRIP_HELD_W = 9;
+
+static void size_grip(int width) {
+  lv_obj_set_width(s_scrub_thumb, width);
+  lv_obj_set_x(s_scrub_thumb, (G.scrub_w - width) / 2);
+  lv_obj_set_style_radius(s_scrub_thumb, width / 2, LV_PART_MAIN);
+}
+
+static int scroll_range() {
+  return std::max(0, (int) (lv_obj_get_scroll_y(s_list) + lv_obj_get_scroll_bottom(s_list)));
+}
+
+static void place_scrub_thumb() {
+  if (s_scrub == nullptr) return;
+  const int range = scroll_range();
+  set_visible(s_scrub, range > 0);
+  if (range <= 0) return;
+  const int track = G.list_h - 8;
+  const int content = range + G.list_h;
+  const int thumb_h = std::max(40, track * G.list_h / content);
+  const int y = 4 + (int) ((int64_t) (track - thumb_h) * lv_obj_get_scroll_y(s_list) / range);
+  if (lv_obj_get_height(s_scrub_thumb) != thumb_h) lv_obj_set_height(s_scrub_thumb, thumb_h);
+  if (lv_obj_get_y(s_scrub_thumb) != y) lv_obj_set_y(s_scrub_thumb, std::max(4, y));
+}
+
+static void on_list_scroll(lv_event_t *) { place_scrub_thumb(); }
+
+static std::string row_mark(int row) {
+  if (s_tab == 0) return to_string(std::max(row, 1));  // the playing row has no number of its own
+  const std::string &name = s_client->library()[row].name;
+  if (name.empty()) return "";
+  // one UTF-8 character, upper case
+  size_t n = 1;
+  while (n < name.size() && ((unsigned char) name[n] & 0xC0) == 0x80) n++;
+  return to_upper(name.substr(0, n));
+}
+
+static void on_scrub(lv_event_t *e) {
+  const lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+    set_visible(s_bubble, false);
+    lv_obj_set_style_bg_opa(s_scrub_thumb, 150, LV_PART_MAIN);
+    size_grip(GRIP_W);
+    kick_thumbs(THUMB_SETTLE_MS);
+    refresh();
+    return;
+  }
+  touched();
+  lv_point_t at;
+  lv_indev_get_point(lv_indev_active(), &at);
+  lv_area_t box;
+  lv_obj_get_coords(s_scrub, &box);
+  const float f = std::clamp((float) (at.y - box.y1) / std::max(1, (int) lv_area_get_height(&box)), 0.0f, 1.0f);
+  const int range = scroll_range();
+  lv_obj_scroll_to_y(s_list, (int) (f * range), LV_ANIM_OFF);
+  lv_obj_set_style_bg_opa(s_scrub_thumb, LV_OPA_COVER, LV_PART_MAIN);
+  size_grip(GRIP_HELD_W);
+
+  const int rows = list_rows();
+  if (rows == 0) return;
+  const int row = std::min(rows - 1, (int) (lv_obj_get_scroll_y(s_list) / G.row_step));
+  set_text(s_bubble_lbl, row_mark(row).c_str());
+  lv_obj_set_pos(s_bubble, G.scrub_x - BUBBLE - 16,
+                 std::clamp((int) at.y - BUBBLE / 2, G.list_y, G.list_y + G.list_h - BUBBLE));
+  set_visible(s_bubble, true);
+  // at the foot: the next page of the list
+  if (f > 0.97f && s_tab != 0 && s_client->library_has_more() && !s_client->library_loading() && rows < MAX_ROWS)
+    s_client->request_library(TAB_LIBRARY[s_tab], true);
+}
+
+static void build_scrub(lv_obj_t *screen) {
+  // The strip itself is only a hairline; the box around it is the touch target.
+  s_scrub = make_box(screen, G.scrub_x, G.list_y, G.scrub_w, G.list_h, 0);
+  lv_obj_t *line = make_box(s_scrub, (G.scrub_w - LINE_W) / 2, 4, LINE_W, G.list_h - 8, LINE_W / 2);
+  style_fill(line, COL_TEXT, 46);
+  lv_obj_remove_flag(line, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_flag(s_scrub, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_set_ext_click_area(s_scrub, 8);
+  lv_obj_add_event_cb(s_scrub, on_scrub, LV_EVENT_PRESSED, nullptr);
+  lv_obj_add_event_cb(s_scrub, on_scrub, LV_EVENT_PRESSING, nullptr);
+  lv_obj_add_event_cb(s_scrub, on_scrub, LV_EVENT_RELEASED, nullptr);
+  lv_obj_add_event_cb(s_scrub, on_scrub, LV_EVENT_PRESS_LOST, nullptr);
+  s_scrub_thumb = make_box(s_scrub, 0, 4, GRIP_W, 40, GRIP_W / 2);
+  style_fill(s_scrub_thumb, COL_TEXT, 150);
+  size_grip(GRIP_W);
+  lv_obj_remove_flag(s_scrub_thumb, LV_OBJ_FLAG_CLICKABLE);
+  set_visible(s_scrub, false);
+
+  s_bubble = make_box(screen, 0, 0, BUBBLE, BUBBLE, BUBBLE / 2);
+  style_fill(s_bubble, COL_ACCENT, LV_OPA_COVER);
+  lv_obj_remove_flag(s_bubble, LV_OBJ_FLAG_CLICKABLE);
+  s_bubble_lbl = make_icon(s_bubble, F.text30, "", COL_ON_ACCENT);
+  set_visible(s_bubble, false);
 }
 
 // ── build ───────────────────────────────────────────────────────────────────
@@ -304,6 +408,7 @@ static void build_list(lv_obj_t *screen) {
   lv_obj_set_scrollbar_mode(s_list, LV_SCROLLBAR_MODE_OFF);
   lv_obj_remove_flag(s_list, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_add_event_cb(s_list, on_scroll_end, LV_EVENT_SCROLL_END, nullptr);
+  lv_obj_add_event_cb(s_list, on_list_scroll, LV_EVENT_SCROLL, nullptr);
 
   s_more = make_box(s_list, 0, 0, G.list_w, G.row_h, 20);
   style_glass(s_more);
@@ -327,6 +432,7 @@ void build(lv_obj_t *screen, MusicAssistant *client, const widgets::Fonts &fonts
   build_topbar(screen);
   if (!G.compact) build_now_playing(screen);
   build_list(screen);
+  build_scrub(screen);
   s_thumb_timer = lv_timer_create(thumb_timer_cb, 100, nullptr);
   lv_timer_pause(s_thumb_timer);
   s_built = true;
@@ -595,6 +701,8 @@ void refresh() {
       update_library_row(i, s_client->library()[i]);
   }
   update_more_button(rows);
+  lv_obj_update_layout(s_list);  // the strip measures the list as it is now
+  place_scrub_thumb();
   update_thumbs(rows);
   if (thumbs_pending() && s_thumb_timer != nullptr) lv_timer_resume(s_thumb_timer);
 }

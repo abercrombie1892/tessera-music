@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.4.4
+version: 0.4.5
 api: "0.8"
 icon: music
 maintainer: abercrombie1892
@@ -35,7 +35,8 @@ tiles:
           choices: [{ value: large, label: title_large }, { value: normal, label: title_normal },
                     { value: "off", label: title_off }] }
       - { id: background, kind: choice, label: background, hint: background_hint, default: theme,
-          choices: [{ value: theme, label: background_theme }, { value: cover, label: background_cover }] }
+          choices: [{ value: theme, label: background_theme }, { value: cover, label: background_cover },
+                   { value: blur, label: background_blur }] }
       - { id: keys, kind: choice, label: keys, hint: keys_hint, default: show,
           choices: [{ value: show, label: keys_show }, { value: hide, label: keys_hide }] }
       - { id: bar, kind: choice, label: bar, hint: bar_hint, default: show,

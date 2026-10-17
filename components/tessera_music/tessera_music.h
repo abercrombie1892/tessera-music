@@ -31,10 +31,23 @@ class TesseraMusic : public Component, public tessera::Plugin {
   // The dashboard's screen the next open starts on (1 now playing, 2 rooms, 3 queue): the tile's bar opens the others.
   void open_dashboard_at(int screen) { start_screen_ = screen; }
   void open_dashboard();
-  // The dashboard's MDI icons (playlist-play, speaker, volume): Tessera's own icon set lacks some of them.
-  const lv_font_t *icon_font(bool large) const {
-    font::Font *f = fonts_[large ? 7 : 6];
-    return f != nullptr ? f->get_lv_font() : nullptr;
+  // The dashboard's MDI icons (24, 28, 34, 48 px; Tessera's own set lacks some of them): the largest no taller than
+  // `max_px`, the smallest when none is.
+  const lv_font_t *icon_font(int max_px) const {
+    static constexpr int SIZES[] = {24, 28, 34, 48};
+    font::Font *best = fonts_[6];
+    for (int i = 1; i < 4; i++)
+      if (SIZES[i] <= max_px && fonts_[6 + i] != nullptr) best = fonts_[6 + i];
+    return best != nullptr ? best->get_lv_font() : nullptr;
+  }
+  // The dashboard's Outfit (14, 17, 20, 26, 30, 34, 52 px): the largest no taller than `max_px`, null when none is.
+  const lv_font_t *text_font(int max_px) const {
+    static constexpr int SIZES[] = {14, 17, 20, 26, 30, 34, 0, 0, 0, 0, 52};
+    const lv_font_t *best = nullptr;
+    int best_px = 0;
+    for (int i = 0; i < FONTS; i++)
+      if (SIZES[i] > best_px && SIZES[i] <= max_px && fonts_[i] != nullptr) best = fonts_[i]->get_lv_font(), best_px = SIZES[i];
+    return best;
   }
   void dashboard_closed() { dashboard_open_ = false; }
 

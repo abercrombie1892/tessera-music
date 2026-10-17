@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.5
+- Tile, new look: keys as milky glass panes (light rim, no shadow), play as a solid disc, the queue and volume keys
+  bare; the room pill is the one filled part of the bar.
+- The progress is the track's own waveform from Music Assistant (the played part bright), and a swinging wave with a
+  ball for tracks without an analysis.
+- Big tile (10-inch): the words in the middle of the space above the wave, in the plugin's larger Outfit; the wave,
+  keys and bar at the foot of the cover with more room between them.
+- New background "Blurred cover": the cover itself, blurred and darkened, behind the tile (made once per cover).
+- Queue and library lists: a fine strip on the right to slide through the list; the letter (or the number in the
+  queue) shows beside the finger, and the foot of the strip loads the next page.
+
 ## 0.4.4
 - A bar under the tile's keys, as Sonos has it: the queue on the left, the room as a pill in the middle (opens the
   rooms), the volume on the right (a slider for a few seconds). Option "Bar" on the tile; left out on small tiles.
