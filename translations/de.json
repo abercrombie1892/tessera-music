@@ -4,7 +4,9 @@
   },
   "screen": {
     "connecting": "Verbinde mit Music Assistant",
-    "nothing": "Es läuft nichts"
+    "nothing": "Es läuft nichts",
+    "on": "An",
+    "off": "Aus"
   },
   "app": {
     "name": "Music Assistant",
@@ -37,6 +39,10 @@
     "keys_show": "Anzeigen",
     "keys_hide": "Ausblenden",
     "bar": "Leiste unten",
-    "bar_hint": "Warteschlange, Raum und Lautstärke unter den Tasten. Die Raum-Pille öffnet die Räume, die linke Taste die Warteschlange, die rechte einen Lautstärkeregler. Auf kleinen Kacheln entfällt sie."
+    "bar_hint": "Warteschlange, Raum und Lautstärke unter den Tasten. Die Raum-Pille öffnet die Räume, die linke Taste die Warteschlange, die rechte einen Lautstärkeregler. Auf kleinen Kacheln entfällt sie.",
+    "scene_name": "Szene / Licht",
+    "scene_example": "Miami",
+    "colors": "Eigene Farben",
+    "colors_hint": "Leer: die Farben der Szene (aus der Hue Bridge) oder der Lampe. Sonst bis zu drei Farben als #RRGGBB, mit Komma getrennt: #3848FE, #FE6EBC."
   }
 }

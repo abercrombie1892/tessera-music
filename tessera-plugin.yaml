@@ -2,7 +2,7 @@
 # Assistant itself over the home network (a WebSocket and its image proxy): a private plugin, not for the index,
 # whose rules forbid a screen's own network connections.
 id: tessera_music
-version: 0.4.6
+version: 0.4.7
 api: "0.8"
 icon: music
 maintainer: abercrombie1892
@@ -14,6 +14,10 @@ requires:
   psram: true
 boards: [wavesharep4, jc8012p4a1, jc8012p4a1v2, jc8012p4a1v3]
 flash_kb: 500
+
+permissions:
+  # A tap on a scene tile starts the scene, on a light tile it switches the light.
+  home_assistant_actions: [scene.turn_on, light.toggle]
 
 inputs:
   - { id: ma_host, kind: text, scope: all, label: ma_host, hint: ma_host_hint }
@@ -41,6 +45,19 @@ tiles:
           choices: [{ value: show, label: keys_show }, { value: hide, label: keys_hide }] }
       - { id: bar, kind: choice, label: bar, hint: bar_hint, default: show,
           choices: [{ value: show, label: keys_show }, { value: hide, label: keys_hide }] }
+
+  # A scene or a light on a gradient of its own colours (the Hue bridge's for a scene, the lamp's for a light).
+  - id: scene
+    name: scene_name
+    icon: lightbulb
+    sizes: { min: 1x1, max: 4x4 }
+    memory: 900
+    domains: [scene, light]
+    attributes: [brightness, rgb_color]
+    example: scene_example
+    preview: { title: "{name}" }
+    options:
+      - { id: colors, kind: text, label: colors, hint: colors_hint }
 
 # The player over the whole glass, opened by a tap on the tile.
 cards:
