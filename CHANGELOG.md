@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.6
+- The wave on the tile is as high as the tile allows (a sixth of it at most, 40 px at most): a small tile no longer
+  lets it run over the edge or squeeze the cover.
+
 ## 0.4.5
 - Tile, new look: keys as milky glass panes (light rim, no shadow), play as a solid disc, the queue and volume keys
   bare; the room pill is the one filled part of the bar.

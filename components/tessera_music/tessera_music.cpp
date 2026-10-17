@@ -340,8 +340,7 @@ class NowTile : public tessera::Tile {
   // The progress as a wave: the whole track in a soft line, the part played thicker and bright, and a ball that rides
   // the crest at the front. The shape is fixed; only how much of it is lit moves.
   void build_wave_(lv_obj_t *parent, int x, int y, int w) {
-    wave_h_ = ui::px(40);
-    ball_r_ = ui::px(8);
+    ball_r_ = std::max(ui::px(3), wave_h_ / 5);
     wave_amp_ = wave_h_ / 2 - ball_r_;
     const int length = ui::px(150);  // one wave: long and low reads as a swing, short as a scribble
     wave_.clear();
@@ -456,8 +455,10 @@ class NowTile : public tessera::Tile {
 
   // The words and keys under the cover, their height; the keys take what the card has left, a finger's size at most.
   int layout_() {
+    // The wave as high as 7 mm (40 px at most), never more than a sixth of the tile: a small tile keeps its cover.
+    wave_h_ = std::clamp(std::min(ui::mm(7), height_ / 6), ui::px(14), ui::px(40));
     int text_h = (show_title_ ? title_lh_() : 0) + artist_lh_() + ui::px(14) +
-                 ui::px(40) + ui::line_height(Font::BODY);
+                 wave_h_ + ui::line_height(Font::BODY);
     // Beside a tall cover the keys grow with the column, a palm's width at most; under it they stay a finger's size.
     const int column = side_by_side_ ? width_ - height_ - ui::px(24) : width_;
     roomy_ = side_by_side_ && height_ >= ui::mm(70);
