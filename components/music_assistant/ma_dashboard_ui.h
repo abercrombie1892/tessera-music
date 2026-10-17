@@ -90,7 +90,7 @@ void bind(MusicAssistant *client, const Handles &h,
           std::function<void()> clear_wake_guard);     // touch guard off
 
 bool bound();
-void open();    // show screen1 + reveal the dashboard
+void open(int screen = 1);  // reveal the dashboard on this screen (1 now playing, 2 rooms, 3 queue)
 void close();   // hide the dashboard, re-arm the screensaver
 void refresh(); // 1s tick: interop, revision-gated data, progress, clock
 

@@ -16,6 +16,9 @@ namespace ui = tessera::ui;
 
 static constexpr uint32_t ACTIVE_MS = 3000;
 static constexpr uint32_t ICON_PLAY = 0xF040A, ICON_PAUSE = 0xF03E4, ICON_NEXT = 0xF04AD, ICON_PREV = 0xF04AE;
+// In the plugin's own MDI font (playlist-play, speaker, volume-high), not Tessera's icon set.
+static constexpr const char *GLYPH_QUEUE = "\U000F0411", *GLYPH_SPEAKER = "\U000F04C3", *GLYPH_VOLUME = "\U000F057E";
+static constexpr uint32_t VOLUME_OPEN_MS = 5000;
 
 static std::string clock_of(uint32_t seconds) {
   char text[16];
@@ -95,13 +98,14 @@ class NowTile : public tessera::Tile {
     show_title_ = title != "off";
     title_font_ = title == "normal" ? Font::TITLE : Font::HEADLINE;
     keys_ = std::string(c.options["keys"] | "show") == "show";
-
-    int text_h = (show_title_ ? ui::line_height(title_font_) : 0) + ui::line_height(Font::BODY_LARGE) + ui::px(14) +
-                 ui::line_height(Font::BODY);
-    // The keys take what the card has left beside the cover, a finger's size at most.
-    key_h_ = keys_ ? std::max(ui::mm(6), std::min(ui::mm(9), height_ - text_h - ui::px(10))) : 0;
-    if (keys_) text_h += key_h_ + ui::px(10);
     side_by_side_ = width_ >= height_ * 13 / 10;
+    // The bar (queue, room, volume) only where it fits: a small tile stays as it was.
+    bar_ = std::string(c.options["bar"] | "show") == "show" && plugin_->icon_font(false) != nullptr;
+    int text_h = layout_();
+    if (bar_ && !bar_fits_(text_h)) {
+      bar_ = false;
+      text_h = layout_();
+    }
     side_ = side_by_side_ ? height_ : std::max(0, std::min(width_, height_ - text_h - ui::px(10)));
 
     art_ = ui::block(c.parent, theme::TRACK);
@@ -148,7 +152,10 @@ class NowTile : public tessera::Tile {
     lv_obj_add_flag(art_, LV_OBJ_FLAG_CLICKABLE);  // only the cover opens the dashboard
     lv_obj_set_user_data(art_, reinterpret_cast<void *>(static_cast<intptr_t>(KEY_COVER)));
     lv_obj_add_event_cb(art_, on_key_, LV_EVENT_CLICKED, this);
-    if (keys_) build_keys_(c.parent, x, y + ui::line_height(Font::BODY) + ui::px(10), text_w);
+    y += ui::line_height(Font::BODY) + ui::px(10);
+    if (keys_) build_keys_(c.parent, x, y, text_w);
+    if (keys_) y += key_h_ + ui::px(10);
+    if (bar_) build_bar_(c.parent, x, y, text_w);
   }
 
   void on_tick(uint32_t) override {
@@ -173,6 +180,7 @@ class NowTile : public tessera::Tile {
     if (lv_obj_get_width(fill_) != filled) lv_obj_set_width(fill_, filled);
     if (!tint_) ui::set_color(artist_, playing ? theme::MUTED : theme::SUBTLE);
     if (keys_) ui::set_text(glyph_of(play_), ui::icon(playing ? ICON_PAUSE : ICON_PLAY));
+    if (bar_) tick_bar_(player);
 
     plugin_->cover().request(now.image_url, side_);
     paint_cover_();
@@ -185,6 +193,7 @@ class NowTile : public tessera::Tile {
     ui::set_color(elapsed_, theme::SUBTLE);
     ui::set_color(total_, theme::SUBTLE);
     ui::set_color(note_, theme::MUTED);
+    if (bar_) theme_bar_();
     if (tint_) paint_tint_();
   }
 
@@ -222,16 +231,126 @@ class NowTile : public tessera::Tile {
       lv_obj_set_style_bg_color(track_, lv_color_hex(0xFFFFFF), 0);
       lv_obj_set_style_bg_opa(track_, 70, 0);
       lv_obj_set_style_bg_color(fill_, lv_color_hex(0xFFFFFF), 0);
-      for (lv_obj_t *key : {prev_, play_, next_}) {
+      for (lv_obj_t *key : {prev_, play_, next_, queue_, pill_, volume_}) {
         if (key == nullptr) continue;
         lv_obj_set_style_bg_color(key, lv_color_hex(0xFFFFFF), 0);
         lv_obj_set_style_bg_opa(key, key == play_ ? LV_OPA_COVER : 50, 0);
         text_color(glyph_of(key), key == play_ ? 0x1A1208 : 0xFFFFFF);
       }
+      if (room_ != nullptr) text_color(room_, 0xFFFFFF);
+      if (slider_ != nullptr) {
+        lv_obj_set_style_bg_color(slider_, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(slider_, 70, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(slider_, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR);
+        lv_obj_set_style_bg_color(slider_, lv_color_hex(0xFFFFFF), LV_PART_KNOB);
+      }
     }
   }
 
-  enum Key : int { KEY_PREV = 1, KEY_PLAY, KEY_NEXT, KEY_COVER };
+  enum Key : int { KEY_PREV = 1, KEY_PLAY, KEY_NEXT, KEY_COVER, KEY_QUEUE, KEY_ROOMS, KEY_VOLUME };
+
+  // The words and keys under the cover, their height; the keys take what the card has left, a finger's size at most.
+  int layout_() {
+    int text_h = (show_title_ ? ui::line_height(title_font_) : 0) + ui::line_height(Font::BODY_LARGE) + ui::px(14) +
+                 ui::line_height(Font::BODY);
+    bar_h_ = bar_ ? ui::mm(7) : 0;
+    if (bar_) text_h += bar_h_ + ui::px(10);
+    key_h_ = keys_ ? std::max(ui::mm(6), std::min(ui::mm(9), height_ - text_h - ui::px(10))) : 0;
+    if (keys_) text_h += key_h_ + ui::px(10);
+    return text_h;
+  }
+
+  // Beside the cover the words must fit the height; under it the cover keeps a third of the tile at least.
+  bool bar_fits_(int text_h) const {
+    const int text_w = side_by_side_ ? width_ - height_ - ui::px(16) : width_;
+    if (text_w < 2 * bar_h_ + ui::mm(20)) return false;
+    return side_by_side_ ? text_h <= height_ : height_ - text_h - ui::px(10) >= height_ / 3;
+  }
+
+  // As Sonos has it: the queue on the left, the room as a pill in the middle (the rooms screen), the volume on the
+  // right, which turns the row into a slider for a few seconds.
+  void build_bar_(lv_obj_t *parent, int x, int y, int w) {
+    const lv_font_t *icons = plugin_->icon_font(bar_h_ >= ui::mm(8));
+    queue_ = bar_key_(parent, KEY_QUEUE, GLYPH_QUEUE, icons, x, y, bar_h_);
+    volume_ = bar_key_(parent, KEY_VOLUME, GLYPH_VOLUME, icons, x + w - bar_h_, y, bar_h_);
+    pill_x_ = x + bar_h_ + ui::px(12);
+    pill_max_ = w - 2 * (bar_h_ + ui::px(12));
+    pill_ = bar_key_(parent, KEY_ROOMS, GLYPH_SPEAKER, icons, pill_x_, y, bar_h_);
+    lv_obj_set_style_radius(pill_, bar_h_ / 2, 0);
+    lv_obj_align(glyph_of(pill_), LV_ALIGN_LEFT_MID, ui::px(14), 0);
+    room_x_ = ui::px(14) + lv_font_get_line_height(icons) + ui::px(8);
+    room_ = ui::label(pill_, Font::BODY_LARGE, theme::INK);
+    lv_obj_align(room_, LV_ALIGN_LEFT_MID, room_x_, 0);
+
+    slider_ = lv_slider_create(parent);
+    lv_obj_set_pos(slider_, pill_x_, y + bar_h_ / 2 - ui::px(5));
+    lv_obj_set_size(slider_, x + w - bar_h_ - ui::px(12) - pill_x_ - ui::px(8), ui::px(10));
+    lv_slider_set_range(slider_, 0, 100);
+    lv_obj_set_style_pad_all(slider_, ui::px(6), LV_PART_KNOB);
+    lv_obj_set_style_radius(slider_, LV_RADIUS_CIRCLE, LV_PART_KNOB);
+    lv_obj_set_style_shadow_width(slider_, 0, LV_PART_KNOB);
+    lv_obj_set_ext_click_area(slider_, bar_h_ / 2);
+    lv_obj_add_event_cb(slider_, on_slider_, LV_EVENT_VALUE_CHANGED, this);
+    lv_obj_add_event_cb(slider_, on_slider_, LV_EVENT_RELEASED, this);
+    lv_obj_add_flag(slider_, LV_OBJ_FLAG_HIDDEN);
+    theme_bar_();
+  }
+
+  lv_obj_t *bar_key_(lv_obj_t *parent, int code, const char *glyph, const lv_font_t *font, int x, int y, int side) {
+    lv_obj_t *key = key_(parent, code, ICON_PLAY, x, y, side, theme::TRACK);
+    lv_obj_set_style_text_font(glyph_of(key), font, 0);
+    lv_label_set_text(glyph_of(key), glyph);
+    lv_obj_center(glyph_of(key));
+    return key;
+  }
+
+  void theme_bar_() {
+    for (lv_obj_t *key : {queue_, pill_, volume_}) ui::set_color(glyph_of(key), theme::INK);
+    ui::set_color(room_, theme::INK);
+    lv_obj_set_style_bg_color(slider_, ui::color(theme::TRACK), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(slider_, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(slider_, ui::color(theme::ACCENT), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(slider_, ui::color(theme::INK), LV_PART_KNOB);
+  }
+
+  void tick_bar_(const music_assistant::MAPlayer *player) {
+    const std::string room = player != nullptr ? player->display_name : "";
+    if (room != room_text_) {
+      room_text_ = room;
+      ui::set_text(room_, room);
+      // The pill as wide as its words, never wider than the room between the keys.
+      const int text_w = ui::text_width(room, Font::BODY_LARGE) + ui::px(4);
+      const int pill_w = std::min(pill_max_, std::max(bar_h_, room_x_ + text_w + ui::px(18)));
+      lv_obj_set_width(room_, std::max(0, pill_w - room_x_ - ui::px(18)));
+      lv_obj_set_width(pill_, pill_w);
+      lv_obj_set_x(pill_, pill_x_ + (pill_max_ - pill_w) / 2);
+    }
+    if (!volume_open_) return;
+    const bool dragging = lv_obj_has_state(slider_, LV_STATE_PRESSED);
+    if (!dragging && player != nullptr && player->volume_level >= 0 &&
+        lv_slider_get_value(slider_) != player->volume_level && millis() - volume_ms_ > 1500)
+      lv_slider_set_value(slider_, player->volume_level, LV_ANIM_OFF);
+    if (!dragging && millis() - volume_ms_ > VOLUME_OPEN_MS) show_volume_(false);
+  }
+
+  void show_volume_(bool open) {
+    volume_open_ = open;
+    volume_ms_ = millis();
+    for (lv_obj_t *obj : {queue_, pill_}) (open ? lv_obj_add_flag : lv_obj_clear_flag)(obj, LV_OBJ_FLAG_HIDDEN);
+    (open ? lv_obj_clear_flag : lv_obj_add_flag)(slider_, LV_OBJ_FLAG_HIDDEN);
+    if (!open) return;
+    auto *ma = plugin_->ma();
+    const auto *player = ma != nullptr ? ma->player(ma->selected_player()) : nullptr;
+    if (player != nullptr && player->volume_level >= 0) lv_slider_set_value(slider_, player->volume_level, LV_ANIM_OFF);
+  }
+
+  static void on_slider_(lv_event_t *e) {
+    auto *tile = static_cast<NowTile *>(lv_event_get_user_data(e));
+    tile->volume_ms_ = millis();
+    if (lv_event_get_code(e) != LV_EVENT_RELEASED) return;
+    auto *ma = tile->plugin_->ma();
+    if (ma != nullptr && ma->is_connected()) ma->cmd_set_volume(lv_slider_get_value(tile->slider_));
+  }
 
   // Previous, play or pause, next: round keys under the words, play the largest, in the middle of the column.
   void build_keys_(lv_obj_t *parent, int x, int y, int w) {
@@ -269,7 +388,12 @@ class NowTile : public tessera::Tile {
   }
 
   void press_(int code) {
-    if (code == KEY_COVER) {
+    if (code == KEY_VOLUME) {
+      show_volume_(!volume_open_);
+      return;
+    }
+    if (code == KEY_COVER || code == KEY_QUEUE || code == KEY_ROOMS) {
+      plugin_->open_dashboard_at(code == KEY_QUEUE ? 3 : code == KEY_ROOMS ? 2 : 1);
       tessera::open_card(plugin_->plugin_id(), "player", "", tile_);
       return;
     }
@@ -329,6 +453,11 @@ class NowTile : public tessera::Tile {
   lv_obj_t *prev_{}, *play_{}, *next_{};
   bool keys_{true};
   int key_h_{0};
+  lv_obj_t *queue_{}, *pill_{}, *volume_{}, *room_{}, *slider_{};
+  bool bar_{true}, volume_open_{false};
+  int bar_h_{0}, pill_x_{0}, pill_max_{0}, room_x_{0};
+  uint32_t volume_ms_{0};
+  std::string room_text_;
 };
 
 // The card a tap on the tile opens. It draws nothing itself: the dashboard lies over the whole glass, and the card
@@ -393,7 +522,8 @@ void TesseraMusic::open_dashboard() {
   if (room >= 0 && room < (int) ma_->player_count()) ma_->select_player_user(room);
   dashboard_open_ = true;
   seen();
-  music_assistant::ma_ui::open();
+  music_assistant::ma_ui::open(start_screen_);
+  start_screen_ = 1;
 }
 
 void TesseraMusic::loop() {

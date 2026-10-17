@@ -28,7 +28,14 @@ class TesseraMusic : public Component, public tessera::Plugin {
   void seen() { seen_ms_ = millis(); }
   // A tile keeps its room; while the dashboard is open, the room chosen there.
   void follow_room(const std::string &name);
+  // The dashboard's screen the next open starts on (1 now playing, 2 rooms, 3 queue): the tile's bar opens the others.
+  void open_dashboard_at(int screen) { start_screen_ = screen; }
   void open_dashboard();
+  // The dashboard's MDI icons (playlist-play, speaker, volume): Tessera's own icon set lacks some of them.
+  const lv_font_t *icon_font(bool large) const {
+    font::Font *f = fonts_[large ? 7 : 6];
+    return f != nullptr ? f->get_lv_font() : nullptr;
+  }
   void dashboard_closed() { dashboard_open_ = false; }
 
  protected:
@@ -40,6 +47,7 @@ class TesseraMusic : public Component, public tessera::Plugin {
   lv_obj_t *clock_{nullptr};
   uint32_t seen_ms_{0}, clock_ms_{0};
   bool built_{false}, dashboard_open_{false};
+  int start_screen_{1};
 };
 
 }  // namespace esphome::tessera_music

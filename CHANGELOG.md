@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4
+- A bar under the tile's keys, as Sonos has it: the queue on the left, the room as a pill in the middle (opens the
+  rooms), the volume on the right (a slider for a few seconds). Option "Bar" on the tile; left out on small tiles.
+
 ## 0.4.3
 - Room names in upper case keep their umlauts: "SPIELT IN KÜCHE" instead of "KüCHE".
 

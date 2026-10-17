@@ -863,12 +863,12 @@ void bind(MusicAssistant *client, const Handles &h,
 
 bool bound() { return s_bound; }
 
-void open() {
+void open(int screen) {
   if (!s_bound) return;
   lv_obj_clear_flag(H.dashboard, LV_OBJ_FLAG_HIDDEN);
   s_client->set_ui_active(true);  // fast polling + queue data from now on
   s_last_touch_ms = millis();
-  show_screen(1);
+  show_screen(screen);
   // populate immediately — otherwise labels/cover wait for the next data
   // revision (up to a poll interval of stale-looking emptiness)
   update_static_();

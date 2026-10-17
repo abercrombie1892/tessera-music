@@ -34,6 +34,8 @@
     "keys": "Keys",
     "keys_hint": "Previous, play/pause and next on the tile. A tap on the cover opens the dashboard.",
     "keys_show": "Show",
-    "keys_hide": "Hide"
+    "keys_hide": "Hide",
+    "bar": "Bar",
+    "bar_hint": "Queue, room and volume under the keys. The room pill opens the rooms, the left key the queue, the right one a volume slider. Left out on small tiles."
   }
 }

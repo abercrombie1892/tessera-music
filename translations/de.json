@@ -34,6 +34,8 @@
     "keys": "Tasten",
     "keys_hint": "Zurück, Play/Pause und Weiter auf der Kachel. Das Dashboard öffnet ein Tippen aufs Cover.",
     "keys_show": "Anzeigen",
-    "keys_hide": "Ausblenden"
+    "keys_hide": "Ausblenden",
+    "bar": "Leiste unten",
+    "bar_hint": "Warteschlange, Raum und Lautstärke unter den Tasten. Die Raum-Pille öffnet die Räume, die linke Taste die Warteschlange, die rechte einen Lautstärkeregler. Auf kleinen Kacheln entfällt sie."
   }
 }
