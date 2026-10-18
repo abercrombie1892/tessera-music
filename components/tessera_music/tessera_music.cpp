@@ -166,7 +166,7 @@ class NowTile : public tessera::Tile {
       bar_ = false;
       text_h = layout_();
     }
-    side_ = side_by_side_ ? height_ : std::max(0, std::min(width_, height_ - text_h - ui::px(10)));
+    side_ = side_by_side_ ? cover_() : std::max(0, std::min(width_, height_ - text_h - ui::px(10)));
 
     art_ = ui::block(c.parent, theme::TRACK);
     lv_obj_set_size(art_, side_, side_);
@@ -186,16 +186,16 @@ class NowTile : public tessera::Tile {
     const int text_w = width_ - x;
     // Beside a tall cover the words sit in the free space above the wave, which with the keys sits at its foot; beside a small one all
     // of it in the middle.
-    const int words_h = (show_title_ ? title_lh_() : 0) + artist_lh_();
+    const int words_h = (show_title_ ? title_h_() : 0) + artist_lh_();
     int y = side_by_side_ ? std::max(0, roomy_ ? (height_ - (text_h - words_h) - words_h) / 2 : (height_ - text_h) / 2)
                             : side_ + ui::px(10);
     title_ = ui::label(c.parent, title_font_, theme::INK);
     if (title_big_ != nullptr) lv_obj_set_style_text_font(title_, title_big_, 0);
     lv_obj_set_pos(title_, x, y);
-    lv_obj_set_size(title_, text_w, show_title_ ? title_lh_() : 1);
+    lv_obj_set_size(title_, text_w, show_title_ ? title_h_() : 1);
     if (!show_title_) lv_obj_add_flag(title_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_style_text_align(title_, LV_TEXT_ALIGN_CENTER, 0);
-    y += show_title_ ? title_lh_() : 0;
+    y += show_title_ ? title_h_() : 0;
     artist_ = ui::label(c.parent, Font::BODY_LARGE, theme::MUTED);
     if (artist_big_ != nullptr) lv_obj_set_style_text_font(artist_, artist_big_, 0);
     lv_obj_set_pos(artist_, x, y);
@@ -439,10 +439,10 @@ class NowTile : public tessera::Tile {
   int layout_() {
     // The wave as high as 7 mm (40 px at most), never more than a sixth of the tile: a small tile keeps its cover.
     wave_h_ = std::clamp(std::min(ui::mm(7), height_ / 6), ui::px(14), ui::px(40));
-    int text_h = (show_title_ ? title_lh_() : 0) + artist_lh_() + ui::px(14) +
+    int text_h = (show_title_ ? title_h_() : 0) + artist_lh_() + ui::px(14) +
                  wave_h_ + ui::line_height(Font::BODY);
     // Beside a tall cover the keys grow with the column, a palm's width at most; under it they stay a finger's size.
-    const int column = side_by_side_ ? width_ - height_ - ui::px(24) : width_;
+    const int column = side_by_side_ ? width_ - cover_() - ui::px(24) : width_;
     roomy_ = side_by_side_ && height_ >= ui::mm(70);
     const bool roomy = roomy_;
     gap_ = roomy ? ui::mm(6) : ui::px(10);
@@ -456,7 +456,7 @@ class NowTile : public tessera::Tile {
 
   // Beside the cover the words must fit the height; under it the cover keeps a third of the tile at least.
   bool bar_fits_(int text_h) const {
-    const int text_w = side_by_side_ ? width_ - height_ - ui::px(24) : width_;
+    const int text_w = side_by_side_ ? width_ - cover_() - ui::px(24) : width_;
     if (text_w < 2 * bar_h_ + ui::mm(20)) return false;
     return side_by_side_ ? text_h <= height_ : height_ - text_h - ui::px(10) >= height_ / 3;
   }
@@ -693,6 +693,14 @@ class NowTile : public tessera::Tile {
   bool show_title_{true}, side_by_side_{false};
   Font title_font_{Font::HEADLINE};
   const lv_font_t *title_big_{nullptr}, *artist_big_{nullptr};
+  // Beside the cover the words need a column of 34 mm at least: a narrow tile (the 4-inch's) gets a smaller cover, never
+  // under three fifths of its height, and a title of two lines.
+  int cover_() const {
+    if (!side_by_side_) return height_;
+    return std::min(height_, std::max(height_ * 3 / 5, width_ - ui::px(24) - ui::mm(34)));
+  }
+  bool narrow_() const { return side_by_side_ && width_ - cover_() - ui::px(24) < ui::mm(40) && height_ < ui::mm(70); }
+  int title_h_() const { return title_lh_() * (narrow_() ? 2 : 1); }
   int title_lh_() const { return title_big_ != nullptr ? lv_font_get_line_height(title_big_) : ui::line_height(title_font_); }
   int artist_lh_() const {
     return artist_big_ != nullptr ? lv_font_get_line_height(artist_big_) : ui::line_height(Font::BODY_LARGE);

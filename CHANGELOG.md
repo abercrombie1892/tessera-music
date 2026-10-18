@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+- A narrow Now playing tile (the 4-inch's, three columns wide) gives the words a column of 34 mm: the cover gets
+  smaller (never under three fifths of the tile's height) and the title takes two lines.
+
 ## 0.4.9
 - The rooms screen loads the cover of up to eight rooms (it was four): Schlafzimmer and Emmi, the fifth and sixth with a
   cover, showed the music note.
