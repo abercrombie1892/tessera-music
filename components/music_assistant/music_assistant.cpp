@@ -996,12 +996,18 @@ void MusicAssistant::loop() {
 
 int MusicAssistant::pinned_index_() const {
     if (pinned_.empty()) return -1;
+    // the room's own name first, then one that begins with the other ("Bad" for "Badezimmer"), then a part of it
+    int best = -1, best_score = 0;
     for (size_t i = 0; i < players_.size(); i++) {
         std::string name = players_[i].display_name;
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-        if (name.find(pinned_) != std::string::npos) return (int) i;
+        int score = 0;
+        if (name == pinned_) score = 3;
+        else if (name.rfind(pinned_, 0) == 0 || pinned_.rfind(name, 0) == 0) score = 2;
+        else if (name.find(pinned_) != std::string::npos) score = 1;
+        if (score > best_score) best = (int) i, best_score = score;
     }
-    return -1;
+    return best;
 }
 
 void MusicAssistant::pin_player(const std::string &name) {

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+- The room of a tile finds its player by the whole name first, then by its beginning ("Badezimmer" finds "Bad"),
+  then by a part of it: "Bad" no longer lands on another room whose name contains it.
+
 ## 0.5.0
 - A narrow Now playing tile (the 4-inch's, three columns wide) gives the words a column of 34 mm: the cover gets
   smaller (never under three fifths of the tile's height) and the title takes two lines.
